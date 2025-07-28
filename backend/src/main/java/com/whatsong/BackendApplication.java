@@ -1,4 +1,4 @@
-package com.musicpang;
+package com.whatsong;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
