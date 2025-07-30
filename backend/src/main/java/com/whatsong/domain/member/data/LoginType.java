@@ -3,7 +3,7 @@ package com.whatsong.domain.member.data;
 import java.util.Arrays;
 
 import com.whatsong.global.exception.exception.MemberException;
-import com.whatsong.global.exception.type.MemberExceptionType;
+import com.whatsong.global.exception.ErrorCode.MemberErrorCode;
 
 import lombok.Getter;
 
@@ -22,7 +22,7 @@ public enum LoginType {
 		return Arrays.stream(LoginType.values())
 			.filter(value -> value.getType().equals(type))
 			.findAny()
-			.orElseThrow(() -> new MemberException(MemberExceptionType.INVALID_LOGIN_TYPE));
+			.orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_LOGIN_TYPE));
 	}
 
 }

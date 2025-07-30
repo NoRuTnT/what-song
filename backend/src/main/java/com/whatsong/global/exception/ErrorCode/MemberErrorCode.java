@@ -1,11 +1,11 @@
-package com.whatsong.global.exception.type;
+package com.whatsong.global.exception.ErrorCode;
 
 import org.springframework.http.HttpStatus;
 
 import lombok.Getter;
 
 @Getter
-public enum MemberExceptionType {
+public enum MemberErrorCode {
 	NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, 1000, "사용자를 찾을 수 없습니다."),
 	INVALID_LOGIN_TYPE(HttpStatus.BAD_REQUEST, 1001, "유효하지 않은 로그인 타입입니다."),
 	DUPLICATED_LONGIN_ID(HttpStatus.BAD_REQUEST, 1002, "중복된 아이디 입니다."),
@@ -20,7 +20,7 @@ public enum MemberExceptionType {
 	private final Integer code;
 	private final String message;
 
-	MemberExceptionType(HttpStatus status, Integer code, String message) {
+	MemberErrorCode(HttpStatus status, Integer code, String message) {
 		this.status = status;
 		this.code = code;
 		this.message = message;
