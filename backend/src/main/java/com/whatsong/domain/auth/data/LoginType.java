@@ -1,4 +1,4 @@
-package com.whatsong.domain.member.data;
+package com.whatsong.domain.auth.data;
 
 import java.util.Arrays;
 
@@ -9,8 +9,9 @@ import lombok.Getter;
 
 @Getter
 public enum LoginType {
-	SOCIAL("SOCIAL"),
-	SIMPLE("SIMPLE");
+	KAKAO("KAKAO"),
+	LOCAL("LOCAL"),
+	TEST("TEST");
 
 	private final String type;
 

@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.whatsong.domain.member.entity.MemberInfo;
+import com.whatsong.domain.member.model.MemberInfo;
 
 @Repository
 public interface MemberInfoRepository extends JpaRepository<MemberInfo, UUID> {

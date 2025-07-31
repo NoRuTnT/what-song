@@ -1,4 +1,4 @@
-package com.whatsong.domain.member.data;
+package com.whatsong.domain.auth.data;
 
 import jakarta.persistence.AttributeConverter;
 

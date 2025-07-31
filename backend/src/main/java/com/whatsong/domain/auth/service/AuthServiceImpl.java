@@ -1,4 +1,4 @@
-package com.whatsong.domain.member.service;
+package com.whatsong.domain.auth.service;
 
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -7,20 +7,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.whatsong.domain.member.data.LoginType;
-import com.whatsong.domain.member.dto.requestDto.JoinRequestDto;
-import com.whatsong.domain.member.dto.requestDto.LoginRequestDto;
-import com.whatsong.domain.member.dto.requestDto.ReissueTokenRequestDto;
-import com.whatsong.domain.member.dto.responseDto.JoinResponseDto;
-import com.whatsong.domain.member.dto.responseDto.LoginResponseDto;
-import com.whatsong.domain.member.dto.responseDto.LogoutResponseDto;
-import com.whatsong.domain.member.dto.responseDto.ReissueTokenResponseDto;
-import com.whatsong.domain.member.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
-import com.whatsong.domain.member.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
-import com.whatsong.domain.member.entity.Member;
-import com.whatsong.domain.member.entity.MemberInfo;
+import com.whatsong.domain.auth.data.LoginType;
+import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
+import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
+import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
+import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.ReissueTokenResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
+import com.whatsong.domain.member.model.Member;
+import com.whatsong.domain.member.model.MemberInfo;
 import com.whatsong.domain.member.repository.MemberInfoRepository;
-import com.whatsong.domain.member.repository.MemberRepository;
+import com.whatsong.domain.auth.repository.AuthRepository;
 import com.whatsong.global.RedisService;
 import com.whatsong.global.exception.ErrorCode.MemberErrorCode;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
@@ -33,10 +33,10 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class MemberServiceImpl implements MemberService {
+public class AuthServiceImpl implements AuthService {
 	private static final Double EXP_INITIAL_NUMBER = 0.0;
 
-	private final MemberRepository memberRepository;
+	private final AuthRepository authRepository;
 	private final MemberInfoRepository memberInfoRepository;
 	private final RedisService redisService;
 	private final JwtProvider jwtProvider;
@@ -46,16 +46,16 @@ public class MemberServiceImpl implements MemberService {
 	/**
 	 * 회원가입
 	 *
-	 * @param joinRequestDto
-	 * @see JoinResponseDto
+	 * @param signupRequestDto
+	 * @see SignupResponseDto
 	 * @return JoinResponseDto
 	 *
 	 */
 	@Override
 	@Transactional
-	public JoinResponseDto signUp(JoinRequestDto joinRequestDto) {
+	public SignupResponseDto signUp(SignupRequestDto signupRequestDto) {
 
-		if (!validateDuplicatedLoginId(joinRequestDto.getLoginId()).isValid()) {
+		if (!validateDuplicatedLoginId(signupRequestDto.getLoginId()).isValid()) {
 			throw new MemberException(MemberErrorCode.DUPLICATED_LONGIN_ID);
 		}
 
@@ -64,48 +64,48 @@ public class MemberServiceImpl implements MemberService {
 		String regexPw = "^[a-zA-Z0-9]+$";
 		String regexName = "^[a-zA-Z0-9가-힣]+$";
 
-		if(!Pattern.matches(regexId,joinRequestDto.getLoginId()) ||
-			joinRequestDto.getLoginId().length() > 20 ||
-			joinRequestDto.getLoginId().length() < 5) {
+		if(!Pattern.matches(regexId, signupRequestDto.getLoginId()) ||
+			signupRequestDto.getLoginId().length() > 20 ||
+			signupRequestDto.getLoginId().length() < 5) {
 			throw new IllegalArgumentException();
 		}
 
-		if(!Pattern.matches(regexPw,joinRequestDto.getPassword()) ||
-			joinRequestDto.getPassword().length() < 4) {
+		if(!Pattern.matches(regexPw, signupRequestDto.getPassword()) ||
+			signupRequestDto.getPassword().length() < 4) {
 			throw new IllegalArgumentException();
 		}
 
-		if(!Pattern.matches(regexName,joinRequestDto.getNickname()) ||
-			joinRequestDto.getNickname().length() < 2 ||
-			joinRequestDto.getNickname().length() > 8) {
+		if(!Pattern.matches(regexName, signupRequestDto.getNickname()) ||
+			signupRequestDto.getNickname().length() < 2 ||
+			signupRequestDto.getNickname().length() > 8) {
 			throw new IllegalArgumentException();
 		}
 
 		UUID memberUUID = UUID.randomUUID();
-		memberRepository.save(Member.builder()
+		authRepository.save(Member.builder()
 			.id(memberUUID)
-			.loginId(joinRequestDto.getLoginId())
-			.password(passwordEncoder.encode(joinRequestDto.getPassword()))
-			.loginType(LoginType.SIMPLE)
+			.loginId(signupRequestDto.getLoginId())
+			.password(passwordEncoder.encode(signupRequestDto.getPassword()))
+			.loginType(LoginType.LOCAL)
 			.build());
 
-		if (!validateDuplicatedNickname(joinRequestDto.getNickname()).isValid()) {
+		if (!validateDuplicatedNickname(signupRequestDto.getNickname()).isValid()) {
 			throw new MemberException(MemberErrorCode.DUPLICATED_NICKNAME);
 		}
 
 		MemberInfo memberInfo = memberInfoRepository.save(MemberInfo.builder()
 			.id(memberUUID)
-			.nickname(joinRequestDto.getNickname())
+			.nickname(signupRequestDto.getNickname())
 			.exp(EXP_INITIAL_NUMBER)
 			.build());
 
-		return JoinResponseDto.of(memberInfo.getNickname());
+		return SignupResponseDto.of(memberInfo.getNickname());
 	}
 
 	@Override
 	@Transactional
 	public LoginResponseDto login(LoginRequestDto loginRequestDto) {
-		Member member = memberRepository.findByLoginId(loginRequestDto.getLoginId())
+		Member member = authRepository.findByLoginId(loginRequestDto.getLoginId())
 			.orElseThrow(() -> new MemberException(MemberErrorCode.LOGIN_FAILED));
 
 		if(!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
@@ -133,7 +133,6 @@ public class MemberServiceImpl implements MemberService {
 		UUID memberId = jwtValidator.getData(token);
 
 		try {
-			// 레디스에서 refreshToken 저장
 			redisService.deleteKeyInRedis(memberId.toString());
 			return LogoutResponseDto.builder().logoutResult("SUCCESS").build();
 		} catch (Exception e) {
@@ -153,7 +152,7 @@ public class MemberServiceImpl implements MemberService {
 	@Transactional(readOnly = true)
 	public ValidateDuplicatedLoginIdResponseDto validateDuplicatedLoginId(String loginId) {
 
-		return new ValidateDuplicatedLoginIdResponseDto(memberRepository.findByLoginIdNotExists(loginId));
+		return new ValidateDuplicatedLoginIdResponseDto(authRepository.findByLoginIdNotExists(loginId));
 	}
 
 	/**

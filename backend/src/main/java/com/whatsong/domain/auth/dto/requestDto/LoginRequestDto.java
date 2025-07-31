@@ -1,4 +1,4 @@
-package com.whatsong.domain.member.dto.requestDto;
+package com.whatsong.domain.auth.dto.requestDto;
 
 import lombok.Getter;
 

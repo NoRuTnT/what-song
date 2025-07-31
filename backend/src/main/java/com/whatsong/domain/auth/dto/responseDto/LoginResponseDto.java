@@ -1,4 +1,4 @@
-package com.whatsong.domain.member.dto.responseDto;
+package com.whatsong.domain.auth.dto.responseDto;
 
 import lombok.Builder;
 import lombok.Getter;

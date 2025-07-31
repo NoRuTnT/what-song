@@ -1,9 +1,9 @@
-package com.whatsong.domain.member.dto.requestDto;
+package com.whatsong.domain.auth.dto.requestDto;
 
 import lombok.Getter;
 
 @Getter
-public class JoinRequestDto {
+public class SignupRequestDto {
 	private String loginId;
 
 	private String password;

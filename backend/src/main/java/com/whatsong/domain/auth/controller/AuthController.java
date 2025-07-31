@@ -1,4 +1,4 @@
-package com.whatsong.domain.member.controller;
+package com.whatsong.domain.auth.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,16 +11,16 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.whatsong.domain.member.dto.requestDto.JoinRequestDto;
-import com.whatsong.domain.member.dto.requestDto.LoginRequestDto;
-import com.whatsong.domain.member.dto.requestDto.ReissueTokenRequestDto;
-import com.whatsong.domain.member.dto.responseDto.JoinResponseDto;
-import com.whatsong.domain.member.dto.responseDto.LoginResponseDto;
-import com.whatsong.domain.member.dto.responseDto.LogoutResponseDto;
-import com.whatsong.domain.member.dto.responseDto.ReissueTokenResponseDto;
-import com.whatsong.domain.member.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
-import com.whatsong.domain.member.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
-import com.whatsong.domain.member.service.MemberService;
+import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
+import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
+import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
+import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.ReissueTokenResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
+import com.whatsong.domain.auth.service.AuthService;
 import com.whatsong.global.common.response.BaseResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -28,24 +28,24 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/member")
 @RequiredArgsConstructor
-public class MemberController {
+public class AuthController {
 
-	private final MemberService memberService;
+	private final AuthService authService;
 
 	/**
 	 * 회원가입
 	 *
-	 * @param joinRequestDto
-	 * @see JoinResponseDto
+	 * @param signupRequestDto
+	 * @see SignupResponseDto
 	 * @return ResponseEntity<BaseResponse < JoinResponseDto>>
 	 */
 	@PostMapping("/signup")
-	private ResponseEntity<BaseResponse<JoinResponseDto>> signUp(@RequestBody JoinRequestDto joinRequestDto) {
+	private ResponseEntity<BaseResponse<SignupResponseDto>> signUp(@RequestBody SignupRequestDto signupRequestDto) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<JoinResponseDto>builder()
+			.body(BaseResponse.<SignupResponseDto>builder()
 				.code(HttpStatus.OK.value())
-				.data(memberService.signUp(joinRequestDto))
+				.data(authService.signUp(signupRequestDto))
 				.build());
 	}
 
@@ -61,7 +61,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(BaseResponse.<LogoutResponseDto>builder()
 				.code(HttpStatus.OK.value())
-				.data(memberService.logout(token))
+				.data(authService.logout(token))
 				.build());
 	}
 
@@ -78,7 +78,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(BaseResponse.<LoginResponseDto>builder()
 				.code(HttpStatus.OK.value())
-				.data(memberService.login(loginRequestDto))
+				.data(authService.login(loginRequestDto))
 				.build());
 	}
 
@@ -96,7 +96,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(BaseResponse.<ValidateDuplicatedLoginIdResponseDto>builder()
 				.code(HttpStatus.OK.value())
-				.data(memberService.validateDuplicatedLoginId(loginId))
+				.data(authService.validateDuplicatedLoginId(loginId))
 				.build());
 	}
 
@@ -114,7 +114,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(BaseResponse.<ValidateDuplicatedNicknameResponseDto>builder()
 				.code(HttpStatus.OK.value())
-				.data(memberService.validateDuplicatedNickname(nickname))
+				.data(authService.validateDuplicatedNickname(nickname))
 				.build());
 	}
 
@@ -132,7 +132,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(BaseResponse.<ReissueTokenResponseDto>builder()
 				.code(HttpStatus.OK.value())
-				.data(memberService.reissueToken(reissueTokenRequestDto))
+				.data(authService.reissueToken(reissueTokenRequestDto))
 				.build());
 	}
 }

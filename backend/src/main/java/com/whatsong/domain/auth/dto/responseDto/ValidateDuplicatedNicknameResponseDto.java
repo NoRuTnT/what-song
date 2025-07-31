@@ -1,10 +1,10 @@
-package com.whatsong.domain.member.dto.responseDto;
+package com.whatsong.domain.auth.dto.responseDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class ValidateDuplicatedLoginIdResponseDto {
+public class ValidateDuplicatedNicknameResponseDto {
 	private boolean isValid;
 }
