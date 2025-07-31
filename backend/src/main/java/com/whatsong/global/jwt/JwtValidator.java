@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.whatsong.global.RedisService;
-import com.whatsong.global.exception.exception.MemberException;
-import com.whatsong.global.exception.ErrorCode.MemberErrorCode;
+import com.whatsong.global.exception.exception.AuthException;
+import com.whatsong.global.exception.ErrorCode.AuthErrorCode;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -39,10 +39,10 @@ public class JwtValidator {
 
 			Date now = new Date();
 			if (claims.getExpiration() != null && claims.getExpiration().before(now)) {
-				throw new MemberException(type.equals("access") ? MemberErrorCode.INVALID_ACCESS_TOKEN : MemberErrorCode.INVALID_REFRESH_TOKEN);
+				throw new AuthException(type.equals("access") ? AuthErrorCode.INVALID_ACCESS_TOKEN : AuthErrorCode.INVALID_REFRESH_TOKEN);
 			}
 		} catch (MalformedJwtException | ExpiredJwtException | SignatureException e) {
-			throw new MemberException(type.equals("access") ? MemberErrorCode.INVALID_ACCESS_TOKEN : MemberErrorCode.INVALID_REFRESH_TOKEN);
+			throw new AuthException(type.equals("access") ? AuthErrorCode.INVALID_ACCESS_TOKEN : AuthErrorCode.INVALID_REFRESH_TOKEN);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class JwtValidator {
 		String token = redisService.getRefreshToken(memberId);
 
 		if (!refreshToken.equals(token)) {
-			throw new MemberException(MemberErrorCode.INVALID_REFRESH_TOKEN);
+			throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
 		}
 
 		return memberId;

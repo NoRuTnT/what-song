@@ -22,9 +22,9 @@ import com.whatsong.domain.member.model.MemberInfo;
 import com.whatsong.domain.member.repository.MemberInfoRepository;
 import com.whatsong.domain.auth.repository.AuthRepository;
 import com.whatsong.global.RedisService;
-import com.whatsong.global.exception.ErrorCode.MemberErrorCode;
+import com.whatsong.global.exception.ErrorCode.AuthErrorCode;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
-import com.whatsong.global.exception.exception.MemberException;
+import com.whatsong.global.exception.exception.AuthException;
 import com.whatsong.global.exception.exception.MemberInfoException;
 import com.whatsong.global.jwt.JwtProvider;
 import com.whatsong.global.jwt.JwtValidator;
@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
 	public SignupResponseDto signUp(SignupRequestDto signupRequestDto) {
 
 		if (!validateDuplicatedLoginId(signupRequestDto.getLoginId()).isValid()) {
-			throw new MemberException(MemberErrorCode.DUPLICATED_LONGIN_ID);
+			throw new AuthException(AuthErrorCode.DUPLICATED_LONGIN_ID);
 		}
 
 
@@ -90,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
 			.build());
 
 		if (!validateDuplicatedNickname(signupRequestDto.getNickname()).isValid()) {
-			throw new MemberException(MemberErrorCode.DUPLICATED_NICKNAME);
+			throw new AuthException(AuthErrorCode.DUPLICATED_NICKNAME);
 		}
 
 		MemberInfo memberInfo = memberInfoRepository.save(MemberInfo.builder()
@@ -106,10 +106,10 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public LoginResponseDto login(LoginRequestDto loginRequestDto) {
 		Member member = authRepository.findByLoginId(loginRequestDto.getLoginId())
-			.orElseThrow(() -> new MemberException(MemberErrorCode.LOGIN_FAILED));
+			.orElseThrow(() -> new AuthException(AuthErrorCode.LOGIN_FAILED));
 
 		if(!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
-			throw new MemberException(MemberErrorCode.LOGIN_FAILED);
+			throw new AuthException(AuthErrorCode.LOGIN_FAILED);
 		}
 
 		String memberNickname = memberInfoRepository.findNicknameById(member.getId())
@@ -136,7 +136,7 @@ public class AuthServiceImpl implements AuthService {
 			redisService.deleteKeyInRedis(memberId.toString());
 			return LogoutResponseDto.builder().logoutResult("SUCCESS").build();
 		} catch (Exception e) {
-			throw new MemberException(MemberErrorCode.REDIS_DELETE_FAIL);
+			throw new AuthException(AuthErrorCode.REDIS_DELETE_FAIL);
 		}
 	}
 

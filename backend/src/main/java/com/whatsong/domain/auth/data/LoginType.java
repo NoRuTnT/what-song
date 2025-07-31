@@ -2,8 +2,8 @@ package com.whatsong.domain.auth.data;
 
 import java.util.Arrays;
 
-import com.whatsong.global.exception.exception.MemberException;
-import com.whatsong.global.exception.ErrorCode.MemberErrorCode;
+import com.whatsong.global.exception.exception.AuthException;
+import com.whatsong.global.exception.ErrorCode.AuthErrorCode;
 
 import lombok.Getter;
 
@@ -23,7 +23,7 @@ public enum LoginType {
 		return Arrays.stream(LoginType.values())
 			.filter(value -> value.getType().equals(type))
 			.findAny()
-			.orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_LOGIN_TYPE));
+			.orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_LOGIN_TYPE));
 	}
 
 }
