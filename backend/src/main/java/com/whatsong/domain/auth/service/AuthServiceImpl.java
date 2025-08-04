@@ -3,6 +3,8 @@ package com.whatsong.domain.auth.service;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,12 +13,15 @@ import com.whatsong.domain.auth.data.LoginType;
 import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
+import com.whatsong.domain.auth.dto.requestDto.SocialLoginRequestDto;
 import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ReissueTokenResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.SocialLoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
+import com.whatsong.domain.auth.service.provider.KakaoMemberProvider;
 import com.whatsong.domain.member.model.Member;
 import com.whatsong.domain.member.model.MemberInfo;
 import com.whatsong.domain.member.repository.MemberInfoRepository;
@@ -42,6 +47,11 @@ public class AuthServiceImpl implements AuthService {
 	private final JwtProvider jwtProvider;
 	private final JwtValidator jwtValidator;
 	private final PasswordEncoder passwordEncoder;
+	private final KakaoMemberProvider kakaoMemberProvider;
+
+
+	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
+
 
 	/**
 	 * 회원가입
@@ -126,6 +136,34 @@ public class AuthServiceImpl implements AuthService {
 			.refreshToken(refreshToken)
 			.build();
 	}
+
+
+	public SocialLoginResponseDto socialLogin(SocialLoginRequestDto socialLoginRequestDto, String deviceId) {
+		Member member;
+		try {
+			member = kakaoMemberProvider.findOrCreateMember(socialLoginRequestDto.getIdToken());
+		}  catch (Exception e) {
+			logger.warn("User sign-in failed.", e);
+			throw new AuthException(AuthErrorCode.UNKNOWN);
+		}
+
+		String memberNickname = memberInfoRepository.findNicknameById(member.getId())
+			.orElseThrow(() -> new MemberInfoException(MemberInfoErrorCode.NOT_FOUND_MEMBER_INFO));
+
+
+		String accessToken = jwtProvider.createAccessToken(member.getId());
+		String refreshToken = jwtProvider.createRefreshToken(member.getId());
+
+		redisService.saveRefreshToken(member.getId(), refreshToken);
+
+		return SocialLoginResponseDto.builder()
+			.nickname(memberNickname)
+			.accessToken(accessToken)
+			.refreshToken(refreshToken)
+			.build();
+	}
+
+
 
 	@Override
 	public LogoutResponseDto logout(String token) {

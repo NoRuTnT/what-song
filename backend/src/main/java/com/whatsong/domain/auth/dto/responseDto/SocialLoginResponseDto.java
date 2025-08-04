@@ -2,19 +2,16 @@ package com.whatsong.domain.auth.dto.responseDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SignupResponseDto {
+public class SocialLoginResponseDto {
 	private String nickname;
 
-	public static SignupResponseDto of(String nickname) {
-		return SignupResponseDto.builder()
-			.nickname(nickname)
-			.build();
-	}
+	private String accessToken;
+
+	private String refreshToken;
+
 }

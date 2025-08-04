@@ -35,6 +35,7 @@ public class RedisService {
 	 * @param memberId
 	 * @param refreshToken
 	 */
+	//todo reids key에 deviceID추가
 	public void saveRefreshToken(UUID memberId, String refreshToken) {
 		String key = memberId.toString();
 		redisTemplate.opsForValue().set(key, refreshToken, 1, TimeUnit.DAYS);

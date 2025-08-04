@@ -35,13 +35,12 @@ public class Member extends BaseTimeEntity {
 	@Id
 	private UUID id;
 
-	@Size(max = 30)
+	@Size(max = 40)
 	@NotNull
 	@Column
 	private String loginId;
 
 	@Size(max = 200)
-	@NotNull
 	@Column
 	private String password;
 

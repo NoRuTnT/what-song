@@ -14,10 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
+import com.whatsong.domain.auth.dto.requestDto.SocialLoginRequestDto;
 import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ReissueTokenResponseDto;
+import com.whatsong.domain.auth.dto.responseDto.SocialLoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
 import com.whatsong.domain.auth.service.AuthService;
@@ -43,10 +45,7 @@ public class AuthController {
 	private ResponseEntity<BaseResponse<SignupResponseDto>> signUp(@RequestBody SignupRequestDto signupRequestDto) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<SignupResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(authService.signUp(signupRequestDto))
-				.build());
+			.body(BaseResponse.success(authService.signUp(signupRequestDto)));
 	}
 
 	/**
@@ -59,10 +58,7 @@ public class AuthController {
 	private ResponseEntity<BaseResponse<LogoutResponseDto>> logout(@RequestHeader("accessToken") String token) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<LogoutResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(authService.logout(token))
-				.build());
+			.body(BaseResponse.success(authService.logout(token)));
 	}
 
 	/**
@@ -76,11 +72,18 @@ public class AuthController {
 	private ResponseEntity<BaseResponse<LoginResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<LoginResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(authService.login(loginRequestDto))
-				.build());
+			.body(BaseResponse.success(authService.login(loginRequestDto)));
 	}
+
+
+	@PostMapping("/social-login")
+	private ResponseEntity<BaseResponse<SocialLoginResponseDto>> socialLogin(@RequestHeader("DEVICE_ID") String deviceId, @RequestBody SocialLoginRequestDto socialLoginRequestDto) {
+
+		return ResponseEntity.status(HttpStatus.OK)
+			.body(BaseResponse.success(authService.socialLogin(socialLoginRequestDto,deviceId)));
+	}
+
+
 
 	/**
 	 * 로그인 아이디 중복 검사
@@ -94,10 +97,7 @@ public class AuthController {
 		@PathVariable("login-id") String loginId) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<ValidateDuplicatedLoginIdResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(authService.validateDuplicatedLoginId(loginId))
-				.build());
+			.body(BaseResponse.success(authService.validateDuplicatedLoginId(loginId)));
 	}
 
 	/**
@@ -112,10 +112,7 @@ public class AuthController {
 		@PathVariable("nickname") String nickname) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<ValidateDuplicatedNicknameResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(authService.validateDuplicatedNickname(nickname))
-				.build());
+			.body(BaseResponse.success(authService.validateDuplicatedNickname(nickname)));
 	}
 
 	/**
@@ -130,9 +127,6 @@ public class AuthController {
 		@RequestBody ReissueTokenRequestDto reissueTokenRequestDto
 	) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<ReissueTokenResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(authService.reissueToken(reissueTokenRequestDto))
-				.build());
+			.body(BaseResponse.success(authService.reissueToken(reissueTokenRequestDto)));
 	}
 }

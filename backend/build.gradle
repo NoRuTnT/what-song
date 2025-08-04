@@ -44,6 +44,10 @@ dependencies {
 	//lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	//OpenFeign
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.3.0'
+	implementation 'io.github.openfeign:feign-okhttp:13.5'
+	implementation 'io.github.openfeign.form:feign-form-spring:3.8.0'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
