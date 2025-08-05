@@ -24,8 +24,11 @@ import com.whatsong.domain.auth.dto.responseDto.SocialLoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedLoginIdResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedNicknameResponseDto;
 import com.whatsong.domain.auth.service.AuthService;
+import com.whatsong.global.annotation.DisableSwaggerAuthButton;
 import com.whatsong.global.common.response.BaseResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -35,13 +38,16 @@ public class AuthController {
 
 	private final AuthService authService;
 
-	/**
-	 * 회원가입
-	 *
-	 * @param signupRequestDto
-	 * @see SignupResponseDto
-	 * @return ResponseEntity<BaseResponse < JoinResponseDto>>
-	 */
+
+	@Operation(
+		summary = "회원가입",
+		description = """
+        ### 회원가입을 진행합니다. 
+    """,
+		responses = {
+			@ApiResponse(responseCode = "200", description = "회원가입 성공"),
+		}
+	)
 	@PostMapping("/signup")
 	private ResponseEntity<BaseResponse<SignupResponseDto>> signUp(@RequestBody SignupRequestDto signupRequestDto) {
 
@@ -49,6 +55,17 @@ public class AuthController {
 			.body(BaseResponse.success(authService.signUp(signupRequestDto)));
 	}
 
+	@Operation(
+		summary = "게스트계정생성",
+		description = """
+        ### 임시용 게스트계정을 생성합니다.
+        
+        - 게스트계정 memberId와 nickname은 guest + 5자리의 숫자로 랜덤생성됩니다. 
+    """,
+		responses = {
+			@ApiResponse(responseCode = "200", description = "guest계정생성성공"),
+		}
+	)
 	@PostMapping("/guest")
 	private ResponseEntity<BaseResponse<GuestSignupResponseDto>> guestSignUp() {
 
@@ -56,28 +73,19 @@ public class AuthController {
 			.body(BaseResponse.success(authService.guestSignUp()));
 	}
 
-
-
-	/**
-	 * 로그아웃
-	 *
-	 * @param token
-	 * @return
-	 */
-	@DeleteMapping("/logout")
-	private ResponseEntity<BaseResponse<LogoutResponseDto>> logout(@RequestHeader("accessToken") String token) {
-
-		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.success(authService.logout(token)));
-	}
-
-	/**
-	 * 로그인
-	 *
-	 * @param loginRequestDto
-	 * @see LoginResponseDto
-	 * @return ResponseEntity<BaseResponse < LoginResponseDto>>
-	 */
+	@DisableSwaggerAuthButton
+	@Operation(
+		summary = "일반로그인 and guest로그인",
+		description = """
+        ### 이미 회원인 경우 로그인을, 그렇지 않다면 회원가입을 진행합니다.
+        
+        - 회원가입을 진행한 유저는 닉네임이 카카오톡 닉네임으로 설정됩니다.
+    """,
+		responses = {
+			@ApiResponse(responseCode = "200", description = "로그인 성공"),
+			@ApiResponse(responseCode = "403", description = "유효하지 않은 토큰")
+		}
+	)
 	@PostMapping("/login")
 	private ResponseEntity<BaseResponse<LoginResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto) {
 
@@ -86,6 +94,20 @@ public class AuthController {
 	}
 
 
+	@DisableSwaggerAuthButton
+	@Operation(
+		summary = "로그인 or 회원가입",
+		description = """
+        ### 이미 회원인 경우 로그인을, 그렇지 않다면 회원가입을 진행합니다.
+        
+        - 회원가입을 진행한 유저는 닉네임이 카카오톡 닉네임으로 설정됩니다.
+    """,
+		responses = {
+			@ApiResponse(responseCode = "200", description = "로그인 성공"),
+			@ApiResponse(responseCode = "201", description = "회원가입 성공"),
+			@ApiResponse(responseCode = "403", description = "유효하지 않은 토큰")
+		}
+	)
 	@PostMapping("/social-login")
 	private ResponseEntity<BaseResponse<SocialLoginResponseDto>> socialLogin(@RequestHeader("DEVICE_ID") String deviceId, @RequestBody SocialLoginRequestDto socialLoginRequestDto) {
 
@@ -93,15 +115,28 @@ public class AuthController {
 			.body(BaseResponse.success(authService.socialLogin(socialLoginRequestDto,deviceId)));
 	}
 
+	@Operation(
+		summary = "로그아웃",
+		description = """
+        ### 로그아웃
+        
+        - 클라이언트에서 사용하던 Access Token과 Refresh Token이 서버 측에서 파기됩니다.
+        
+        - 파기된 토큰은 재사용이 불가능하고, 새롭게 로그인을 하여 발급받아야 합니다.
+    """)
+	@DeleteMapping("/logout")
+	private ResponseEntity<BaseResponse<LogoutResponseDto>> logout(@RequestHeader("accessToken") String token) {
+
+		return ResponseEntity.status(HttpStatus.OK)
+			.body(BaseResponse.success(authService.logout(token)));
+	}
 
 
-	/**
-	 * 로그인 아이디 중복 검사
-	 *
-	 * @param loginId
-	 * @see ValidateDuplicatedLoginIdResponseDto
-	 * @return ResponseEntity<BaseResponse < ValidateDuplicatedLoginIdResponseDto>>
-	 */
+	@Operation(
+		summary = "로그인 아이디 중복검사",
+		description = """
+        ### 로그인 아이디가 중복인지 검사합니다.
+    """)
 	@GetMapping("/validate-login-id/{login-id}")
 	private ResponseEntity<BaseResponse<ValidateDuplicatedLoginIdResponseDto>> validateDuplicatedLoginId(
 		@PathVariable("login-id") String loginId) {
@@ -110,13 +145,11 @@ public class AuthController {
 			.body(BaseResponse.success(authService.validateDuplicatedLoginId(loginId)));
 	}
 
-	/**
-	 * 닉네임 중복 검사
-	 *
-	 * @param nickname
-	 * @see ValidateDuplicatedNicknameResponseDto
-	 * @return ResponseEntity<BaseResponse < ValidateDuplicatedNicknameResponseDto>>
-	 */
+	@Operation(
+		summary = "닉네임 중복검사",
+		description = """
+        ### 닉네임이 중복인지 검사합니다.
+    """)
 	@GetMapping("/validate-nickname/{nickname}")
 	private ResponseEntity<BaseResponse<ValidateDuplicatedNicknameResponseDto>> validateDuplicatedNickname(
 		@PathVariable("nickname") String nickname) {
@@ -125,13 +158,21 @@ public class AuthController {
 			.body(BaseResponse.success(authService.validateDuplicatedNickname(nickname)));
 	}
 
-	/**
-	 * 토큰 재발급
-	 *
-	 * @param reissueTokenRequestDto
-	 * @see ReissueTokenResponseDto
-	 * @return ResponseEntity<BaseResponse < ReissueTokenResponseDto>>
-	 */
+	@DisableSwaggerAuthButton
+	@Operation(
+		summary = "토큰 refresh",
+		description = """
+        ### 새로운 Access Token, Refresh Token을 재발급합니다.
+        
+        - 전송한 Access Token과 Refresh Token이 서버 측에서 파기됩니다.
+        
+        - 해당 요청 이후에는 새롭게 발급된 토큰을 사용해야 합니다.
+    """,
+		responses = {
+			@ApiResponse(responseCode = "200", description = "발급완료"),
+			@ApiResponse(responseCode = "403", description = "리프레시토큰 만료. 재로그인 필요")
+		}
+	)
 	@PostMapping("/token")
 	private ResponseEntity<BaseResponse<ReissueTokenResponseDto>> reissueToken(
 		@RequestBody ReissueTokenRequestDto reissueTokenRequestDto
