@@ -4,6 +4,7 @@ import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.SocialLoginRequestDto;
+import com.whatsong.domain.auth.dto.responseDto.GuestSignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
@@ -15,6 +16,8 @@ import com.whatsong.domain.auth.dto.responseDto.ValidateDuplicatedNicknameRespon
 public interface AuthService {
 
 	SignupResponseDto signUp(SignupRequestDto signupRequestDto);
+
+	GuestSignupResponseDto guestSignUp();
 
 	LoginResponseDto login(LoginRequestDto loginRequestDto);
 

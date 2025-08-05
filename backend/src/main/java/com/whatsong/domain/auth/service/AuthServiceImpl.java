@@ -14,6 +14,7 @@ import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.SocialLoginRequestDto;
+import com.whatsong.domain.auth.dto.responseDto.GuestSignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
@@ -110,6 +111,33 @@ public class AuthServiceImpl implements AuthService {
 			.build());
 
 		return SignupResponseDto.of(memberInfo.getNickname());
+	}
+
+	@Override
+	@Transactional
+	public GuestSignupResponseDto guestSignUp() {
+		String loginId;
+
+		do {
+			int randomNum = (int) (Math.random() * 100000);
+			loginId = String.format("guest%05d", randomNum);
+		} while (!validateDuplicatedLoginId(loginId).isValid());
+
+
+		UUID memberUUID = UUID.randomUUID();
+		authRepository.save(Member.builder()
+			.id(memberUUID)
+			.loginId(loginId)
+			.password(null)
+			.loginType(LoginType.GUEST)
+			.build());
+
+		MemberInfo memberInfo = memberInfoRepository.save(MemberInfo.builder()
+			.id(memberUUID)
+			.nickname(loginId)
+			.exp(EXP_INITIAL_NUMBER)
+			.build());
+		return GuestSignupResponseDto.of(memberInfo.getNickname());
 	}
 
 	@Override

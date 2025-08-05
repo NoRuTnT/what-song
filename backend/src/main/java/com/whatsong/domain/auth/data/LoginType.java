@@ -11,6 +11,7 @@ import lombok.Getter;
 public enum LoginType {
 	KAKAO("KAKAO"),
 	LOCAL("LOCAL"),
+	GUEST("GUEST"),
 	TEST("TEST");
 
 	private final String type;

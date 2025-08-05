@@ -15,6 +15,7 @@ import com.whatsong.domain.auth.dto.requestDto.SignupRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.LoginRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.ReissueTokenRequestDto;
 import com.whatsong.domain.auth.dto.requestDto.SocialLoginRequestDto;
+import com.whatsong.domain.auth.dto.responseDto.GuestSignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.SignupResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LoginResponseDto;
 import com.whatsong.domain.auth.dto.responseDto.LogoutResponseDto;
@@ -47,6 +48,15 @@ public class AuthController {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(BaseResponse.success(authService.signUp(signupRequestDto)));
 	}
+
+	@PostMapping("/guest")
+	private ResponseEntity<BaseResponse<GuestSignupResponseDto>> guestSignUp() {
+
+		return ResponseEntity.status(HttpStatus.OK)
+			.body(BaseResponse.success(authService.guestSignUp()));
+	}
+
+
 
 	/**
 	 * 로그아웃
