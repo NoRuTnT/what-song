@@ -27,7 +27,7 @@ import com.whatsong.domain.member.model.Member;
 import com.whatsong.domain.member.model.MemberInfo;
 import com.whatsong.domain.member.repository.MemberInfoRepository;
 import com.whatsong.domain.auth.repository.AuthRepository;
-import com.whatsong.global.RedisService;
+import com.whatsong.global.redis.RedisService;
 import com.whatsong.global.exception.ErrorCode.AuthErrorCode;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
 import com.whatsong.global.exception.exception.AuthException;
@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
 	 *
 	 * @param signupRequestDto
 	 * @see SignupResponseDto
-	 * @return JoinResponseDto
+	 * @return SignupResponseDto
 	 *
 	 */
 	@Override
@@ -113,6 +113,13 @@ public class AuthServiceImpl implements AuthService {
 		return SignupResponseDto.of(memberInfo.getNickname());
 	}
 
+	/**
+	 * 게스트계정생성
+	 *
+	 * @see GuestSignupResponseDto
+	 * @return GuestSignupResponseDto
+	 *
+	 */
 	@Override
 	@Transactional
 	public GuestSignupResponseDto guestSignUp() {
@@ -140,6 +147,14 @@ public class AuthServiceImpl implements AuthService {
 		return GuestSignupResponseDto.of(memberInfo.getNickname());
 	}
 
+	/**
+	 * 일반로그인
+	 *
+	 * @param loginRequestDto
+	 * @see LoginResponseDto
+	 * @return LoginResponseDto
+	 *
+	 */
 	@Override
 	@Transactional
 	public LoginResponseDto login(LoginRequestDto loginRequestDto) {
@@ -165,7 +180,14 @@ public class AuthServiceImpl implements AuthService {
 			.build();
 	}
 
-
+	/**
+	 * 소셜로그인
+	 *
+	 * @param socialLoginRequestDto, deviceId
+	 * @see SocialLoginResponseDto
+	 * @return SocialLoginResponseDto
+	 *
+	 */
 	public SocialLoginResponseDto socialLogin(SocialLoginRequestDto socialLoginRequestDto, String deviceId) {
 		Member member;
 		try {
