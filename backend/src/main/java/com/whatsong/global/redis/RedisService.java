@@ -1,4 +1,4 @@
-package com.whatsong.global;
+package com.whatsong.global.redis;
 
 import java.util.Set;
 import java.util.UUID;
@@ -40,6 +40,20 @@ public class RedisService {
 		String key = memberId.toString();
 		redisTemplate.opsForValue().set(key, refreshToken, 1, TimeUnit.DAYS);
 	}
+
+	/**
+	 * 입력 범위의 랭킹 정보를 반환하는 메서드
+	 * @param key
+	 * @param start
+	 * @param end
+	 * @return Set<TypedTuple < String>> - 입력받은 범위 내의 데이터 Set
+	 */
+	public Set<ZSetOperations.TypedTuple<String>> getRangeFromRedisSortedSet(String key, long start, long end) {
+		ZSetOperations<String, String> zSetOps = redisTemplate.opsForZSet();
+		return zSetOps.reverseRangeWithScores(key, start, end);
+	}
+
+
 
 	public String getRefreshToken(String memberId) {
 		return redisTemplate.opsForValue().get(memberId);

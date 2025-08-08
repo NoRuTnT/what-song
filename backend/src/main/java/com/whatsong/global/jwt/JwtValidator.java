@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.whatsong.global.RedisService;
+import com.whatsong.global.redis.RedisService;
 import com.whatsong.global.exception.ErrorCode.KakaoServerErrorCode;
 import com.whatsong.global.exception.exception.AuthException;
 import com.whatsong.global.exception.ErrorCode.AuthErrorCode;
