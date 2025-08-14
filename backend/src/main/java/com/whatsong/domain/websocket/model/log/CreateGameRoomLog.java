@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MultiModeGameOverLog {
+public class CreateGameRoomLog {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,11 +26,14 @@ public class MultiModeGameOverLog {
 
 	@NotNull
 	@Column
-	private int multiModeCreateGameRoomLogId;
+	private String roomManagerNickname;
 
 	@NotNull
 	@Column
 	private String title;
+
+	@Column
+	private String password;
 
 	@NotNull
 	@Column
@@ -38,17 +41,21 @@ public class MultiModeGameOverLog {
 
 	@NotNull
 	@Column
-	private String nicknames;
+	private int maxUserNumber;
 
 	@NotNull
 	@Column
-	private String exps;
+	private int quizAmount;
 
 	@NotNull
 	@Column
-	private LocalDateTime endedAt;
+	private Boolean isStarted;
 
 	@NotNull
 	@Column
-	private int playTime;
+	private LocalDateTime createdAt;
+
+	public void gameStart() {
+		this.isStarted = Boolean.TRUE;
+	}
 }

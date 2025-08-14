@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +44,7 @@ public class AfterAnswerService {
 		// 0초인 경우
 		else {
 			if (room.getRound() >= room.getNumberOfProblems()) {
-				room.changeGameRoomType(GameRoomType.END);
+				room.changeGameRoomType(GameRoomType.ENDING);
 				room.setTime(10);
 			} else {
 				room.changePlayType(PlayType.ROUNDSTART);

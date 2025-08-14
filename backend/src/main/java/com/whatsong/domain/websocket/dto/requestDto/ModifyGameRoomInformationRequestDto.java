@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class ModifyGameRoomInformationRequestDto {
-	private int multiModeCreateGameRoomLogId;
+	private int createGameRoomLogId;
 
 	private int gameRoomNo;
 

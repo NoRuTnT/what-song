@@ -1,5 +1,7 @@
 package com.whatsong.domain.websocket.model.log;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,12 +13,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
 @Entity
-@Getter
 @Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MultiModeModifyGameRoomInformationLog {
+public class GameStartLog {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,33 +31,21 @@ public class MultiModeModifyGameRoomInformationLog {
 
 	@NotNull
 	@Column
-	private String previousTitle;
+	private String roomManagerNickname;
 
 	@NotNull
 	@Column
-	private String previousYear;
+	private String title;
 
 	@NotNull
 	@Column
-	private int previousQuizAmount;
+	private String years;
 
 	@NotNull
 	@Column
-	private int previousMaxUserNumber;
+	private String nicknames;
 
 	@NotNull
 	@Column
-	private String modifiedTitle;
-
-	@NotNull
-	@Column
-	private String modifiedYear;
-
-	@NotNull
-	@Column
-	private int modifiedQuizAMount;
-
-	@NotNull
-	@Column
-	private int modifiedMaxUserNumber;
+	private LocalDateTime startedAt;
 }

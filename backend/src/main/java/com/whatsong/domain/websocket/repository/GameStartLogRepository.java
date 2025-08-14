@@ -8,13 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.whatsong.domain.websocket.model.log.MultiModeGameStartLog;
+import com.whatsong.domain.websocket.model.log.GameStartLog;
 
 @Repository
-public interface MultiModeGameStartLogRepository extends JpaRepository<MultiModeGameStartLog, Integer> {
+public interface GameStartLogRepository extends JpaRepository<GameStartLog, Integer> {
 
 	@Query("select MAX(m.startedAt) "
-		+ "from MultiModeGameStartLog m "
+		+ "from GameStartLog m "
 		+ "where m.multiModeCreateGameRoomLogId = :multiModeCreateGameRoomLogId")
 	Optional<LocalDateTime> findLatestStartedAtByMultiModeCreateGameRoomLogId(
 		@Param("multiModeCreateGameRoomLogId") int multiModeCreateGameRoomLogId);
