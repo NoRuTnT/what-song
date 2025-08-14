@@ -39,6 +39,7 @@ import com.whatsong.domain.websocket.model.ChatMessage;
 import com.whatsong.domain.websocket.service.GameService;
 import com.whatsong.global.common.response.BaseResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -50,19 +51,25 @@ public class GameController {
 
 	private final GameService gameService;
 
+
 	/**
 	 * @param accessToken
 	 * @see AllChannelSizeResponseDto
 	 * @return
 	 */
+	@Operation(
+		summary = "모든채널 현재인원수 조회",
+		description = """
+        ### 모든채널 현재인원수 조회
+        
+        - 채널에 접속한 인원수를 list로 받습니다.
+    """)
 	@GetMapping("/channel")
 	@ResponseBody
 	public ResponseEntity<BaseResponse<AllChannelSizeResponseDto>> getAllChannelSize(
 		@RequestHeader("accessToken") String accessToken) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<AllChannelSizeResponseDto>builder()
-				.data(gameService.getAllChannelSizeList(accessToken))
-				.build());
+			.body(BaseResponse.success(gameService.getAllChannelSizeList(accessToken)));
 	}
 
 	/**
@@ -71,14 +78,19 @@ public class GameController {
 	 * @see ChannelUserResponseDto
 	 * @return
 	 */
+	@Operation(
+		summary = "채널의 접속한 모든유저 조회",
+		description = """
+        ### 채널의 접속한 모든유저 조회
+        
+        - 채널에 접속해있는 유저정보를 list로 받습니다.
+    """)
 	@GetMapping("/{channelNo}")
 	@ResponseBody
 	public ResponseEntity<BaseResponse<ChannelUserResponseDto>> getChannelUsers(
 		@RequestHeader("accessToken") String accessToken, @PathVariable int channelNo) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<ChannelUserResponseDto>builder()
-				.data(gameService.getUserList(accessToken, channelNo))
-				.build());
+			.body(BaseResponse.success(gameService.getUserList(accessToken, channelNo)));
 	}
 
 	/**
@@ -91,9 +103,7 @@ public class GameController {
 	public ResponseEntity<BaseResponse<DisconnectSocketResponseDto>> disconnectSocket(
 		@RequestHeader("accessToken") String accessToken, @PathVariable int channelNo) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<DisconnectSocketResponseDto>builder()
-				.data(gameService.disconnectUser(accessToken, channelNo))
-				.build());
+			.body(BaseResponse.success(gameService.disconnectUser(accessToken, channelNo)));
 	}
 
 	/**
@@ -102,15 +112,20 @@ public class GameController {
 	 * @see GameRoomListResponseDto
 	 * @return
 	 */
+	@Operation(
+		summary = "채널의 생성된 모든 방 조회",
+		description = """
+        ### 채널의 생성된 모든 게임룸 조회
+        
+        - 채널에 생성된 모든 방을 list로 받습니다.
+    """)
 	@GetMapping("/main/{channelNo}")
 	@ResponseBody
 	public ResponseEntity<BaseResponse<GameRoomListResponseDto>> getGameRoomList(
 		@RequestHeader("accessToken") String accessToken, @PathVariable int channelNo) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<GameRoomListResponseDto>builder()
-				.data(gameService.getGameRoomList(accessToken, channelNo))
-				.build());
+			.body(BaseResponse.success(gameService.getGameRoomList(accessToken, channelNo)));
 	}
 
 	/**
@@ -119,6 +134,11 @@ public class GameController {
 	 * @see CreateGameRoomResponseDto
 	 * @return
 	 */
+	@Operation(
+		summary = "방 생성",
+		description = """
+        ### 게임룸생성
+    """)
 	@PostMapping("/main/create")
 	@ResponseBody
 	public ResponseEntity<BaseResponse<CreateGameRoomResponseDto>> createGameRoom(
@@ -126,9 +146,7 @@ public class GameController {
 		@RequestBody CreateGameRoomRequestDto createGameRoomRequestDto) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<CreateGameRoomResponseDto>builder()
-				.data(gameService.makeGameRoom(accessToken, createGameRoomRequestDto))
-				.build());
+			.body(BaseResponse.success(gameService.makeGameRoom(accessToken, createGameRoomRequestDto)));
 	}
 
 	/**
@@ -137,15 +155,21 @@ public class GameController {
 	 * @param checkPasswordRequestDto
 	 * @return
 	 */
+	@Operation(
+		summary = "비공개방 비밀번호 체크",
+		description = """
+        ### 입력한 비밀번호가 올바른지 체크
+        
+        - 입장시 비밀번호를 체크합니다
+        
+        - 공개방 항상 TRUE, 비공개방 체크후 TRUE or FALSE
+    """)
 	@PostMapping("/main/password")
 	private ResponseEntity<BaseResponse<CheckPasswordResponseDto>> checkPassword(
 		@RequestBody CheckPasswordRequestDto checkPasswordRequestDto
 	) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<CheckPasswordResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(gameService.checkPassword(checkPasswordRequestDto))
-				.build());
+			.body(BaseResponse.success(gameService.checkPassword(checkPasswordRequestDto)));
 	}
 
 	/**
@@ -155,6 +179,11 @@ public class GameController {
 	 * @param gameRoomNo
 	 * @return ResponseEntity<BaseResponse<EnterGameRoomResponseDto>>
 	 */
+	@Operation(
+		summary = "방 입장",
+		description = """
+        ### gameRoomNo에 맞는 게임룸에 입장합니다.
+    """)
 	@GetMapping("/main/enter/{gameRoomNo}")
 	@ResponseBody
 	private ResponseEntity<BaseResponse<EnterGameRoomResponseDto>> enterGameRoom(
@@ -162,9 +191,7 @@ public class GameController {
 		@PathVariable("gameRoomNo") int gameRoomNo) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<EnterGameRoomResponseDto>builder()
-				.data(gameService.enterGameRoom(accessToken, gameRoomNo))
-				.build());
+			.body(BaseResponse.success(gameService.enterGameRoom(accessToken, gameRoomNo)));
 	}
 
 	/**
@@ -175,15 +202,18 @@ public class GameController {
 	 * @see ExitGameRoomResponse
 	 * @return
 	 */
+	@Operation(
+		summary = "방 퇴장",
+		description = """
+        ### 게임룸에서 나갑니다.
+    """)
 	@PatchMapping("/main/exit")
 	@ResponseBody
 	private ResponseEntity<BaseResponse<ExitGameRoomResponse>> exitGameRoom(
 		@RequestHeader("accessToken") String accessToken, @RequestBody ExitGameRoomRequestDto exitGameRoomRequestDto) {
 
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<ExitGameRoomResponse>builder()
-				.data(gameService.exitGameRoom(accessToken, exitGameRoomRequestDto))
-				.build());
+			.body(BaseResponse.success(gameService.exitGameRoom(accessToken, exitGameRoomRequestDto)));
 	}
 
 	@MessageMapping("/chat-message/{channelNo}")
@@ -209,10 +239,7 @@ public class GameController {
 		@RequestBody GameStartRequestDto gameStartRequestDto
 	) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<GameStartResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(gameService.saveMultiModeGameStartLog(gameStartRequestDto))
-				.build());
+			.body(BaseResponse.success(gameService.saveGameStartLog(gameStartRequestDto)));
 	}
 
 	/**
@@ -226,10 +253,7 @@ public class GameController {
 		@RequestBody GameOverRequestDto gameOverRequestDto
 	) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<GameOverResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(gameService.saveMultiModeGameOverLog(gameOverRequestDto))
-				.build());
+			.body(BaseResponse.success(gameService.saveGameOverLog(gameOverRequestDto)));
 	}
 
 	/**
@@ -239,15 +263,17 @@ public class GameController {
 	 * @param modifyGameRoomInformationRequestDto
 	 * @return
 	 */
+	@Operation(
+		summary = "방 설정 변경",
+		description = """
+        ### 방설정을 변경합니다.
+    """)
 	@PatchMapping("/main/modify")
 	private ResponseEntity<BaseResponse<ModifyGameRoomInformationResponseDto>> modifyGameRoomInformation(
 		@RequestHeader("accessToken") String accessToken,
 		@RequestBody ModifyGameRoomInformationRequestDto modifyGameRoomInformationRequestDto
 	) {
 		return ResponseEntity.status(HttpStatus.OK)
-			.body(BaseResponse.<ModifyGameRoomInformationResponseDto>builder()
-				.code(HttpStatus.OK.value())
-				.data(gameService.modifyGameRoomInformation(accessToken, modifyGameRoomInformationRequestDto))
-				.build());
+			.body(BaseResponse.success(gameService.modifyGameRoomInformation(accessToken, modifyGameRoomInformationRequestDto)));
 	}
 }
