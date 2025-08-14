@@ -77,6 +77,16 @@ public class RedisService {
 		zSetOps.add(key, member, score);
 	}
 
+	/**
+	 * 게임종료후 경험치 갱신 method
+	 * @param member
+	 * @param score
+	 */
+	public void addExp(String key, String member, double score) {
+		ZSetOperations<String, String> zSetOps = redisTemplate.opsForZSet();
+		zSetOps.incrementScore(key, member, score*10);
+	}
+
 	public Double getScorefromSortedSet(String key, String member) {
 		ZSetOperations<String, String> zSetOps = redisTemplate.opsForZSet();
 		return zSetOps.score(key, member);

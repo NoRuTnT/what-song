@@ -35,7 +35,6 @@ import com.whatsong.domain.websocket.data.GameValue;
 import com.whatsong.domain.websocket.data.MessageDtoType;
 import com.whatsong.domain.websocket.data.MessageType;
 import com.whatsong.domain.websocket.data.PlayType;
-import com.whatsong.domain.websocket.dto.GetUserInfoItemDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.BeforeAnswerCorrectDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.ChatMessagePubDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.EnterGameRoomDto;
@@ -51,6 +50,7 @@ import com.whatsong.domain.websocket.dto.requestDto.CheckPasswordRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.CreateGameRoomRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.ExitGameRoomRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.GameOverRequestDto;
+import com.whatsong.domain.websocket.dto.requestDto.GameResultRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.GameStartRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.ModifyGameRoomInformationRequestDto;
 import com.whatsong.domain.websocket.dto.responseDto.AllChannelSizeResponseDto;
@@ -70,18 +70,20 @@ import com.whatsong.domain.websocket.model.Channel;
 import com.whatsong.domain.websocket.model.ChatMessage;
 import com.whatsong.domain.websocket.model.GameRoom;
 import com.whatsong.domain.websocket.model.UserInfoItem;
-import com.whatsong.domain.websocket.model.log.MultiModeCreateGameRoomLog;
-import com.whatsong.domain.websocket.model.log.MultiModeGameOverLog;
-import com.whatsong.domain.websocket.model.log.MultiModeGameStartLog;
-import com.whatsong.domain.websocket.model.log.MultiModeModifyGameRoomInformationLog;
-import com.whatsong.domain.websocket.repository.MultiModeCreateGameRoomLogRepository;
-import com.whatsong.domain.websocket.repository.MultiModeGameStartLogRepository;
-import com.whatsong.domain.websocket.repository.MultiModeModifyGameRoomInformationLogRepository;
-import com.whatsong.domain.websocket.repository.MultiModeGameOverLogRepository;
+import com.whatsong.domain.websocket.model.log.CreateGameRoomLog;
+import com.whatsong.domain.websocket.model.log.GameOverLog;
+import com.whatsong.domain.websocket.dto.GameResultMemberDto;
+import com.whatsong.domain.websocket.model.log.GameStartLog;
+import com.whatsong.domain.websocket.model.log.ModifyGameRoomInformationLog;
+import com.whatsong.domain.websocket.repository.CreateGameRoomLogRepository;
+import com.whatsong.domain.websocket.repository.GameStartLogRepository;
+import com.whatsong.domain.websocket.repository.ModifyGameRoomInformationLogRepository;
+import com.whatsong.domain.websocket.repository.GameOverLogRepository;
 import com.whatsong.domain.websocket.service.subService.AfterAnswerService;
 import com.whatsong.domain.websocket.service.subService.BeforeAnswerService;
 import com.whatsong.domain.websocket.service.subService.CommonService;
 import com.whatsong.domain.websocket.service.subService.RoundStartService;
+import com.whatsong.global.kafka.GameEventProducer;
 import com.whatsong.global.redis.RedisService;
 import com.whatsong.global.redis.RedisService.RedisKey;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
@@ -99,15 +101,16 @@ public class GameService {
 	private final JwtValidator jwtValidator;
 	private final RedisService redisService;
 	private final MemberInfoRepository memberInfoRepository;
-	private final MultiModeCreateGameRoomLogRepository multiModeCreateGameRoomLogRepository;
-	private final MultiModeGameStartLogRepository multiModeGameStartLogRepository;
-	private final MultiModeGameOverLogRepository multiModeGameOverLogRepository;
-	private final MultiModeModifyGameRoomInformationLogRepository multiModeModifyGameRoomInformationLogRepository;
+	private final CreateGameRoomLogRepository createGameRoomLogRepository;
+	private final GameStartLogRepository gameStartLogRepository;
+	private final GameOverLogRepository gameOverLogRepository;
+	private final ModifyGameRoomInformationLogRepository modifyGameRoomInformationLogRepository;
 
 	private final RoundStartService roundStartService;
 	private final BeforeAnswerService beforeAnswerService;
 	private final AfterAnswerService afterAnswerService;
 	private final CommonService commonService;
+	private final GameEventProducer gameEventProducer;
 
 	private final SimpMessageSendingOperations messagingTemplate;
 
@@ -208,6 +211,16 @@ public class GameService {
 			// 게임방 시작 초기화
 			gameRoom.initializeGameStart();
 
+
+			GameStartRequestDto gameStartRequestDto = GameStartRequestDto.builder()
+				.gameRoomNumber(gameRoom.getRoomNo())
+				.createGameRoomLogId(gameRoom.getCreateGameRoomLogId())
+				.build();
+
+			// 게임시작로그 메세지
+			gameEventProducer.sendGameStartEvent(gameStartRequestDto);
+
+
 			// 문제 출제
 			gameRoom.setMultiModeProblems(
 				roundStartService.makeMutiProblemList(gameRoom.getNumberOfProblems(),
@@ -230,14 +243,14 @@ public class GameService {
 		//게임룸 타입 가져오기
 		GameRoomType gameRoomType = gameRoom.getGameRoomType();
 
-		if (gameRoomType == GameRoomType.WAITING || gameRoomType == GameRoomType.END) {
+		if (gameRoomType == GameRoomType.WAITING || gameRoomType == GameRoomType.ENDING) {
 			//일반 채팅
 			ChatMessagePubDto chatMessagePubDto = ChatMessagePubDto.create(MessageDtoType.CHAT,
 				chatMessage.getNickname(), chatMessage.getMessage());
 			messagingTemplate.convertAndSend(destination, chatMessagePubDto);
 			return;
 		}
-		if (gameRoomType == GameRoomType.GAME) {
+		if (gameRoomType == GameRoomType.PLAYING) {
 			PlayType playType = gameRoom.getPlayType();
 			if (playType == PlayType.ROUNDSTART) {
 				//일반 채팅
@@ -360,7 +373,7 @@ public class GameService {
 			}
 
 			// 게임 중인 경우
-			else if (room.getGameRoomType() == GameRoomType.GAME) {
+			else if (room.getGameRoomType() == GameRoomType.PLAYING) {
 				switch (room.getPlayType()) {
 
 					case ROUNDSTART:
@@ -393,25 +406,40 @@ public class GameService {
 
 					messagingTemplate.convertAndSend("/topic/" + roomNum, dto);
 
-					// 경험치 정산
-					for (UUID memberId : userInfoMap.keySet()) {
+					LocalDateTime latestStartedAt = getLatestStartedAt(room.getCreateGameRoomLogId());
+					LocalDateTime endedAt = LocalDateTime.now();
+					int playTime = Long.valueOf(Duration.between(latestStartedAt, endedAt).getSeconds()).intValue();
 
-						Optional<MemberInfo> memberInfoOptional = memberInfoRepository.findById(
-							memberId);
-						if (memberInfoOptional.isEmpty()) {
-							continue;
-						}
 
-						// Transactional을 위한 UpdateExp 메서드 분리
-						MemberInfo memberInfo = memberInfoOptional.get();
-						commonService.updateExp(memberInfo, userInfoMap.get(memberId).getScore());
+					GameOverRequestDto gameOverRequestDto = GameOverRequestDto.builder()
+						.createGameRoomLogId(room.getCreateGameRoomLogId())
+						.title(room.getTitle())
+						.years(room.getYear())
+						.members(gameResults)
+						.endedAt(endedAt)
+						.playTime(playTime)
+						.build();
 
-						// 저장
-						memberInfoRepository.save(memberInfo);
+					List<GameResultMemberDto> kafkaGameResult = room.getUserInfoItems().entrySet().stream()
+						.map(entry -> GameResultMemberDto.builder()
+							.uuid(entry.getKey())
+							.score(entry.getValue().getScore())
+							.build()
+						).collect(Collectors.toList());
 
-						redisService.insertDatatoRedisSortedSet(RedisKey.RANKING.getKey(),
-							memberInfo.getNickname(), memberInfo.getExp());
+					GameResultRequestDto gameResultRequestDto = GameResultRequestDto.builder()
+						.members(kafkaGameResult)
+						.build();
+
+					// redis에는 바로반영
+					for (GameResultItem members : gameResults) {
+						redisService.addExp(RedisKey.RANKING.getKey(),
+							members.getNickname(), members.getScore());
 					}
+					// 나머지는 MQ로 후처리
+					gameEventProducer.sendGameOverEvent(gameOverRequestDto);
+					gameEventProducer.sendGameResultEvent(gameResultRequestDto);
+
 				}
 
 				// 시간 초 카운트
@@ -444,6 +472,7 @@ public class GameService {
 
 					// 다음 판을 위한 세팅
 					room.initializeGameEnd();
+					room.gameRoomUserScoreReset();
 
 					// 클라이언트에게 대기방 관련 정보 전달 해줘야 함
 					GameRoomPubDto dto = GameRoomPubDto.builder()
@@ -477,6 +506,7 @@ public class GameService {
 	 * @return
 	 * @see ChannelUserResponseDto
 	 */
+
 	public ChannelUserResponseDto getUserList(String accessToken, int channelNo) {
 		ChannelUserResponseDto channelUserResponseDto = new ChannelUserResponseDto();
 		List<ChannelUserResponseItem> items = new ArrayList<>();
@@ -529,7 +559,7 @@ public class GameService {
 						.currentRound(gameRoom.getRound())
 						.quizAmount(gameRoom.getNumberOfProblems())
 						.isPrivate(!gameRoom.getPassword().equals(""))
-						.isPlay(gameRoom.getGameRoomType().equals(GameRoomType.GAME))
+						.isPlay(gameRoom.getGameRoomType().equals(GameRoomType.PLAYING))
 						.years(years)
 						.build());
 			}
@@ -555,6 +585,12 @@ public class GameService {
 
 		validateMaxUserNumber(createGameRoomRequestDto.getMaxUserNumber());
 
+
+
+		// 게임방 생성 로그 저장
+		int createGameRoomLogId = saveCreateGameRoomLog(createGameRoomRequestDto,
+			memberInfo.getNickname());
+
 		GameRoom gameRoom = GameRoom.builder().roomNo(roomNumber)
 			.title(createGameRoomRequestDto.getRoomName())
 			.password(createGameRoomRequestDto.getPassword())
@@ -566,11 +602,8 @@ public class GameService {
 			.maxUserNumber(createGameRoomRequestDto.getMaxUserNumber())
 			.totalUsers(0)
 			.gameRoomType(GameRoomType.WAITING)
+			.createGameRoomLogId(createGameRoomLogId)
 			.userInfoItems(userInfoItems).build();
-
-		// 게임방 생성 로그 저장
-		int multiModeCreateGameRoomLogId = saveMultiModeCreateGameRoomLog(createGameRoomRequestDto,
-			memberInfo.getNickname());
 
 		channel.removeUser(uuid);
 		channel.addUser(uuid, roomNumber);
@@ -606,7 +639,7 @@ public class GameService {
 
 		return CreateGameRoomResponseDto.builder()
 			.gameRoomNo(roomNumber)
-			.multiModeCreateGameRoomLogId(multiModeCreateGameRoomLogId)
+			.createGameRoomLogId(createGameRoomLogId)
 			.build();
 	}
 
@@ -695,8 +728,8 @@ public class GameService {
 	 * @see CreateGameRoomRequestDto
 	 * @return int
 	 */
-	private int saveMultiModeCreateGameRoomLog(CreateGameRoomRequestDto createGameRoomRequestDto, String nickname) {
-		return multiModeCreateGameRoomLogRepository.save(MultiModeCreateGameRoomLog.builder()
+	private int saveCreateGameRoomLog(CreateGameRoomRequestDto createGameRoomRequestDto, String nickname) {
+		return createGameRoomLogRepository.save(CreateGameRoomLog.builder()
 				.title(createGameRoomRequestDto.getRoomName())
 				.years(createGameRoomRequestDto.getMusicYear())
 				.maxUserNumber(createGameRoomRequestDto.getMaxUserNumber())
@@ -717,15 +750,15 @@ public class GameService {
 	 * @return GameStartResponseDto
 	 */
 	@Transactional
-	public GameStartResponseDto saveMultiModeGameStartLog(GameStartRequestDto gameStartRequestDto) {
+	public GameStartResponseDto saveGameStartLog(GameStartRequestDto gameStartRequestDto) {
 		GameRoom gameRoom = GameValue.getGameRooms().get(gameStartRequestDto.getGameRoomNumber());
 
 		// 게임방 생성 isStart 업데이트
 		updateIsStartOfMultiModeCreateGameRoomLog(gameStartRequestDto);
 
 		// 게임 시작 로그 생성
-		int multiModeCreateGameRoomLogId = multiModeGameStartLogRepository.save(MultiModeGameStartLog.builder()
-			.multiModeCreateGameRoomLogId(gameStartRequestDto.getMultiModeCreateGameRoomLogId())
+		int multiModeCreateGameRoomLogId = gameStartLogRepository.save(GameStartLog.builder()
+			.multiModeCreateGameRoomLogId(gameStartRequestDto.getCreateGameRoomLogId())
 			.title(gameRoom.getTitle())
 			.years(gameRoom.getYear())
 			.roomManagerNickname(gameRoom.getRoomManagerNickname())
@@ -746,12 +779,12 @@ public class GameService {
 	 */
 	private void updateIsStartOfMultiModeCreateGameRoomLog(GameStartRequestDto gameStartRequestDto) {
 		// 게임방 생성 로그 게임 시작으로 update
-		MultiModeCreateGameRoomLog multiModeCreateGameRoomLog = multiModeCreateGameRoomLogRepository.findById(
-			gameStartRequestDto.getMultiModeCreateGameRoomLogId()).orElseThrow(() ->
+		CreateGameRoomLog createGameRoomLog = createGameRoomLogRepository.findById(
+			gameStartRequestDto.getCreateGameRoomLogId()).orElseThrow(() ->
 			new MultiModeException(MultiModeErrorCode.NOT_FOUND_MULTI_MODE_CREATE_GAME_ROOM_LOG));
 
-		multiModeCreateGameRoomLog.gameStart();
-		multiModeCreateGameRoomLogRepository.save(multiModeCreateGameRoomLog);
+		createGameRoomLog.gameStart();
+		createGameRoomLogRepository.save(createGameRoomLog);
 	}
 
 	/**
@@ -762,27 +795,18 @@ public class GameService {
 	 * @return GameOverResponseDto
 	 */
 	@Transactional
-	public GameOverResponseDto saveMultiModeGameOverLog(GameOverRequestDto gameOverRequestDto) {
-		LocalDateTime latestStartedAt = getLatestStartedAt(gameOverRequestDto);
-		LocalDateTime endedAt = LocalDateTime.now();
-		int playTime = Long.valueOf(Duration.between(latestStartedAt, endedAt).getSeconds()).intValue();
+	public GameOverResponseDto saveGameOverLog(GameOverRequestDto gameOverRequestDto) {
 
-		GameRoom gameRoom = GameValue.getGameRooms().get(gameOverRequestDto.getGameRoomNumber());
 
-		GetUserInfoItemDto userInfoItemDto = gameRoom.getUserInfoItemDto();
-
-		int multiModeCreateGameRoomLogId = multiModeGameOverLogRepository.save(MultiModeGameOverLog.builder()
-			.multiModeCreateGameRoomLogId(gameOverRequestDto.getMultiModeCreateGameRoomLogId())
-			.title(gameRoom.getTitle())
-			.years(gameRoom.getYear())
-			.nicknames(userInfoItemDto.getNicknames())
-			.exps(userInfoItemDto.getExps())
-			.endedAt(endedAt)
-			.playTime(playTime)
+		int multiModeCreateGameRoomLogId = gameOverLogRepository.save(GameOverLog.builder()
+			.multiModeCreateGameRoomLogId(gameOverRequestDto.getCreateGameRoomLogId())
+			.title(gameOverRequestDto.getTitle())
+			.years(gameOverRequestDto.getYears())
+			.members(gameOverRequestDto.getMembers())
+			.endedAt(gameOverRequestDto.getEndedAt())
+			.playTime(gameOverRequestDto.getPlayTime())
 			.build()).getMultiModeCreateGameRoomLogId();
 
-		// 게임방 사용자 점수 초기화
-		gameRoom.gameRoomUserScoreReset();
 
 		return GameOverResponseDto.builder()
 			.multiModeCreateGameRoomLogId(multiModeCreateGameRoomLogId)
@@ -790,15 +814,34 @@ public class GameService {
 	}
 
 	/**
+	 * 게임 종료 로그
+	 *
+	 */
+	@Transactional
+	public void updateGameResult(GameResultRequestDto gameResultRequestDto){
+		List<GameResultMemberDto> members = gameResultRequestDto.getMembers();
+		for(GameResultMemberDto a:members){
+			Optional<MemberInfo> memberInfoOptional = memberInfoRepository.findById(a.getUuid());
+			if (memberInfoOptional.isEmpty()) {
+					continue;
+				}
+			MemberInfo memberInfo = memberInfoOptional.get();
+			commonService.updateExp(memberInfo, a.getScore());
+			memberInfoRepository.save(memberInfo);
+		}
+
+	}
+
+	/**
 	 * 게임 시작 로그에서 startedAt 가져오기
 	 *
-	 * @param gameOverRequestDto
+	 * @param createGameRoomLogId
 	 * @see GameOverRequestDto
 	 * @return LocalDateTime
 	 */
-	private LocalDateTime getLatestStartedAt(GameOverRequestDto gameOverRequestDto) {
-		return multiModeGameStartLogRepository.findLatestStartedAtByMultiModeCreateGameRoomLogId(
-				gameOverRequestDto.getMultiModeCreateGameRoomLogId())
+	private LocalDateTime getLatestStartedAt(int createGameRoomLogId) {
+		return gameStartLogRepository.findLatestStartedAtByMultiModeCreateGameRoomLogId(
+				createGameRoomLogId)
 			.orElseThrow(() -> new MultiModeException(MultiModeErrorCode.NOT_FOUND_MULTI_MODE_GAME_START_LOG));
 	}
 
@@ -829,9 +872,9 @@ public class GameService {
 		gameRoom.modifyInformation(modifyGameRoomInformationRequestDto);
 
 		// log에 변경 내용 저장
-		multiModeModifyGameRoomInformationLogRepository.save(
-			MultiModeModifyGameRoomInformationLog.builder()
-				.multiModeCreateGameRoomLogId(modifyGameRoomInformationRequestDto.getMultiModeCreateGameRoomLogId())
+		modifyGameRoomInformationLogRepository.save(
+			ModifyGameRoomInformationLog.builder()
+				.createGameRoomLogId(modifyGameRoomInformationRequestDto.getCreateGameRoomLogId())
 				.previousTitle(gameRoom.getTitle())
 				.previousYear(gameRoom.getYear())
 				.previousQuizAmount(gameRoom.getNumberOfProblems())
