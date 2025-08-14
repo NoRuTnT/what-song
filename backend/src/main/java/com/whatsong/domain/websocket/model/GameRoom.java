@@ -39,8 +39,8 @@ public class GameRoom {
 	private String title;
 
 	private String password;
-	private boolean isPrivate;
 
+	private boolean isPrivate;
 
 	// 방장
 	private UUID roomManagerUUID;
@@ -66,12 +66,12 @@ public class GameRoom {
 
 
 	private int skipVote;
+
 	private int round;
 
-
-
 	private List<MultiModeProblem> multiModeProblems;
-	private MessageType messageType;
+
+	private int createGameRoomLogId;
 
 
 	//answerList 추가 (정답리스트)
@@ -208,7 +208,7 @@ public class GameRoom {
 	}
 
 	public void initializeGameStart() {
-		this.gameRoomType = GameRoomType.GAME;
+		this.gameRoomType = GameRoomType.PLAYING;
 		this.playType = PlayType.ROUNDSTART;
 		this.time = 5;
 		this.round = 1;
