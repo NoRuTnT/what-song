@@ -32,7 +32,7 @@ public class GameOverLog {
 
 	@NotNull
 	@Column
-	private int multiModeCreateGameRoomLogId;
+	private int createGameRoomLogId;
 
 	@NotNull
 	@Column

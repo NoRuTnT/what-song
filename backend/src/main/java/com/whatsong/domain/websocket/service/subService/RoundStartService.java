@@ -7,7 +7,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,7 @@ import com.whatsong.domain.websocket.dto.gameMessageDto.MusicPlayDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.MusicProblemDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.TimeDto;
 import com.whatsong.domain.websocket.model.GameRoom;
-import com.whatsong.domain.websocket.model.MultiModeProblem;
+import com.whatsong.domain.websocket.model.Problem;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,7 +43,7 @@ public class RoundStartService {
 		// 라운드마다 변수 초기화를 위해 ""를 담아 보냄
 		if (room.getTime() == 5) {
 			MusicProblemDto dto = MusicProblemDto.builder()
-				.musicUrl(room.getMultiModeProblems().get(room.getRound() - 1).getUrl())
+				.musicUrl(room.getProblems().get(room.getRound() - 1).getUrl())
 				.round(room.getRound())
 				.build();
 			messagingTemplate.convertAndSend("/topic/" + roomNum, dto);
@@ -92,7 +91,7 @@ public class RoundStartService {
 		}
 	}
 
-	public List<MultiModeProblem> makeMutiProblemList(int numberOfProblems, String year) {
+	public List<Problem> makeProblemList(int numberOfProblems, String year) {
 		StringTokenizer st = new StringTokenizer(year, SPACE);
 
 		List<Music> musicList = new ArrayList<>();
@@ -111,10 +110,10 @@ public class RoundStartService {
 		}
 
 		//finalMusicList 에서 필요한 값만 빼서 multiModeProblemList 만들기
-		List<MultiModeProblem> multiModeProblemList = makeMultiModeProblemFromFinalMusicList(
+		List<Problem> problemList = makeProblemFromFinalMusicList(
 			finalMusicList, numberOfProblems);
 
-		return multiModeProblemList;
+		return problemList;
 	}
 
 
@@ -125,9 +124,9 @@ public class RoundStartService {
 	 * @param numberOfProblems
 	 * @return List<Music>
 	 */
-	private List<MultiModeProblem> makeMultiModeProblemFromFinalMusicList(
+	private List<Problem> makeProblemFromFinalMusicList(
 		List<Music> finalMusicList, int numberOfProblems) {
-		List<MultiModeProblem> multiModeProblemList = new ArrayList<>();
+		List<Problem> ProblemList = new ArrayList<>();
 
 		// 랜덤한 int를 numberOfProblems만큼 뽑아서 Set에 추가
 		Random random = new Random();
@@ -145,12 +144,12 @@ public class RoundStartService {
 			for (Title title : titleList) {
 				answerList.add(title.getAnswer());
 			}
-			multiModeProblemList.add(
-				MultiModeProblem.create(music.getTitle(), music.getHint(), music.getSinger(),
+			ProblemList.add(
+				Problem.create(music.getTitle(), music.getHint(), music.getSinger(),
 					music.getUrl(), answerList));
 		}
 
-		return multiModeProblemList;
+		return ProblemList;
 	}
 
 	/**

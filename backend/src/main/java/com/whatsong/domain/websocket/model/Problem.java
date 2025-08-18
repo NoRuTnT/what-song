@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MultiModeProblem {
+public class Problem {
 
 	//곡명
 	private String title;
@@ -22,10 +22,10 @@ public class MultiModeProblem {
 	//정답 List
 	private List<String> answerList;
 
-	public static MultiModeProblem create(String title, String initialHint, String singer, String url,
+	public static Problem create(String title, String initialHint, String singer, String url,
 		List<String> answerList) {
 
-		return new MultiModeProblem(title, initialHint, singer, url, answerList);
+		return new Problem(title, initialHint, singer, url, answerList);
 	}
 
 

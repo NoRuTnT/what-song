@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 @Builder
 public class GameOverResponseDto {
-	private int multiModeCreateGameRoomLogId;
+	private int createGameRoomLogId;
 }

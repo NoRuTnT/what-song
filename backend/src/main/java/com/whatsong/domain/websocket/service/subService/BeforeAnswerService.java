@@ -17,7 +17,7 @@ import com.whatsong.domain.websocket.dto.gameMessageDto.SingerHintDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.SkipVoteDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.TimeDto;
 import com.whatsong.domain.websocket.model.GameRoom;
-import com.whatsong.domain.websocket.model.MultiModeProblem;
+import com.whatsong.domain.websocket.model.Problem;
 import com.whatsong.domain.websocket.model.UserInfoItem;
 
 import lombok.RequiredArgsConstructor;
@@ -54,8 +54,8 @@ public class BeforeAnswerService {
 			+ MAKING_CEIL_NUMBER)) {
 			//정답 pub
 			int round = gameRoom.getRound() - ROUND_SYNC_NUMBER;
-			String title = gameRoom.getMultiModeProblems().get(round).getTitle();
-			String singer = gameRoom.getMultiModeProblems().get(round).getSinger();
+			String title = gameRoom.getProblems().get(round).getTitle();
+			String singer = gameRoom.getProblems().get(round).getSinger();
 
 			List<GameRoomMemberInfo> memberInfos = new ArrayList<>();
 
@@ -97,7 +97,7 @@ public class BeforeAnswerService {
 	public void doBeforeAnswer(Integer roomNum, GameRoom room) {
 
 		// 현재 문제를 뽑아오기
-		MultiModeProblem currentProblem = room.getMultiModeProblems().get(room.getRound() - 1);
+		Problem currentProblem = room.getProblems().get(room.getRound() - 1);
 
 		// 10초가 지났다면 가수 힌트
 		if (room.getTime() == SINGER_HINT_TIME) {
