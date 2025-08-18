@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ExitGameRoomRequestDto {
-	private Integer previousChannelNo;
+	private Integer gameRoomNo;
 }
