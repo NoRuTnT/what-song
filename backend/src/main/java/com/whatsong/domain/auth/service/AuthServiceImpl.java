@@ -161,8 +161,10 @@ public class AuthServiceImpl implements AuthService {
 		Member member = authRepository.findByLoginId(loginRequestDto.getLoginId())
 			.orElseThrow(() -> new AuthException(AuthErrorCode.LOGIN_FAILED));
 
-		if(!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
-			throw new AuthException(AuthErrorCode.LOGIN_FAILED);
+		if(member.getLoginType() == LoginType.LOCAL){
+			if(!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
+				throw new AuthException(AuthErrorCode.LOGIN_FAILED);
+			}
 		}
 
 		String memberNickname = memberInfoRepository.findNicknameById(member.getId())
