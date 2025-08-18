@@ -100,15 +100,13 @@ public class GameValue {
 	}
 
 	// 게임룸 -> 로비
-	public static void exitGameRoom(UUID uuid, int gameRoomChannelNo) {
-		int lobbyChannelNo = gameRoomChannelNo / ROOM_DIVIDE_NUMBER;
+	public static void exitGameRoom(UUID uuid, int lobbyChannelNo, int gameRoomChannelNo) {
 
 		moveUserFromChannel(uuid, gameRoomChannelNo, lobbyChannelNo);
 	}
 
 	// 로비 -> 게임룸
-	public static void enterGameRoom(UUID uuid, int gameRoomChannelNo) {
-		int lobbyChannelNo = gameRoomChannelNo / ROOM_DIVIDE_NUMBER;
+	public static void enterGameRoom(UUID uuid, int lobbyChannelNo, int gameRoomChannelNo) {
 
 		moveUserFromChannel(uuid, lobbyChannelNo, gameRoomChannelNo);
 	}

@@ -216,18 +216,6 @@ public class GameController {
 			.body(BaseResponse.success(gameService.exitGameRoom(accessToken, exitGameRoomRequestDto)));
 	}
 
-	@MessageMapping("/chat-message/{channelNo}")
-	public void sendChatMessage(@DestinationVariable("channelNo") String channelNo, @Payload ChatMessage chatMessage,
-		@Header("accessToken") String accessToken) {
-		logger.info("Request Chat Message. channelNo : {}, chatMessage : {}", channelNo, chatMessage);
-
-		if (chatMessage == null) {
-			throw new IllegalArgumentException();
-		}
-
-		gameService.sendMessage(Integer.parseInt(channelNo), chatMessage, accessToken);
-	}
-
 	/**
 	 * 게임 시작 로그 생성
 	 *

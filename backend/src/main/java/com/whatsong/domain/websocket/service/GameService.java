@@ -182,25 +182,37 @@ public class GameService {
 		return DisconnectSocketResponseDto.builder().channelNo(channelNo).build();
 	}
 
+	public void sendLobbyMessage (int channelNo, ChatMessage chatMessage, String accessToken){
+		UUID uuid = jwtValidator.getData(accessToken);
+
+		String destination = getLobbyDestination(channelNo);
+
+		logger.info("nickname : {} , message : {}", chatMessage.getNickname(),
+			chatMessage.getMessage());
+		ChatMessagePubDto chatMessagePubDto = ChatMessagePubDto.create(MessageDtoType.CHAT,
+			chatMessage.getNickname(), chatMessage.getMessage());
+
+		messagingTemplate.convertAndSend(destination, chatMessagePubDto);
+	}
+
+
+
+
+
+
 	/**
 	 * @param channelNo
 	 * @param chatMessage
 	 */
-	public void sendMessage(int channelNo, ChatMessage chatMessage, String accessToken) {
+	public void sendGameRoomMessage(int channelNo, int gameRoomNo, ChatMessage chatMessage, String accessToken) {
 
 		UUID uuid = jwtValidator.getData(accessToken);
 
-		String destination = getDestination(channelNo);
+		String destination = getDestination(channelNo, gameRoomNo);
 
 		logger.info("nickname : {} , message : {}", chatMessage.getNickname(),
 			chatMessage.getMessage());
 
-		if (channelNo <= 10) {
-			ChatMessagePubDto chatMessagePubDto = ChatMessagePubDto.create(MessageDtoType.CHAT,
-				chatMessage.getNickname(), chatMessage.getMessage());
-			messagingTemplate.convertAndSend(destination, chatMessagePubDto);
-			return;
-		}
 
 		//방 번호로 gameRoom 객체 조회
 		GameRoom gameRoom = GameValue.getGameRooms().get(channelNo);
@@ -222,8 +234,8 @@ public class GameService {
 
 
 			// 문제 출제
-			gameRoom.setMultiModeProblems(
-				roundStartService.makeMutiProblemList(gameRoom.getNumberOfProblems(),
+			gameRoom.setProblems(
+				roundStartService.makeProblemList(gameRoom.getNumberOfProblems(),
 					gameRoom.getYear()));
 
 			List<GameRoomMemberInfo> memberInfos = gameRoom.getUserInfoItems().values().stream()
@@ -294,7 +306,7 @@ public class GameService {
 					int round = gameRoom.getRound() - 1;
 					String submitedAnswer = chatMessage.getMessage().replaceAll(" ", "")
 						.toLowerCase();
-					for (String answer : gameRoom.getMultiModeProblems().get(round)
+					for (String answer : gameRoom.getProblems().get(round)
 						.getAnswerList()) {
 						//정답 맞은 경우
 						answer = answer.replaceAll(" ", "").toLowerCase();
@@ -302,8 +314,8 @@ public class GameService {
 
 							gameRoom.setPlayType(PlayType.AFTERANSWER);
 
-							String title = gameRoom.getMultiModeProblems().get(round).getTitle();
-							String singer = gameRoom.getMultiModeProblems().get(round).getSinger();
+							String title = gameRoom.getProblems().get(round).getTitle();
+							String singer = gameRoom.getProblems().get(round).getSinger();
 
 							List<GameRoomMemberInfo> memberInfos = new ArrayList<>();
 							//스킵 투표 초기화
@@ -496,7 +508,15 @@ public class GameService {
 	 * @param channelNo
 	 * @return
 	 */
-	private String getDestination(int channelNo) {
+	private String getDestination(int channelNo, int gameRoomNo) {
+		return "/topic/" + channelNo + "/"+ gameRoomNo;
+	}
+
+	/**
+	 * @param channelNo
+	 * @return
+	 */
+	private String getLobbyDestination(int channelNo) {
 		return "/topic/" + channelNo;
 	}
 
@@ -574,7 +594,9 @@ public class GameService {
 		MemberInfo memberInfo = memberInfoRepository.findById(uuid).orElseThrow(
 			() -> new MemberInfoException(MemberInfoErrorCode.NOT_FOUND_MEMBER_INFO));
 
-		Channel channel = GameValue.getChannel(createGameRoomRequestDto.getChannelNo());
+		int channelNumber = createGameRoomRequestDto.getChannelNo();
+		Channel channel = GameValue.getChannel(channelNumber);
+		// 방번호 생성로직
 		int curRoomIndex = channel.getMinimumEmptyRoomNo();
 		int roomNumber = createGameRoomRequestDto.getChannelNo() * 1000 + curRoomIndex;
 
@@ -591,7 +613,9 @@ public class GameService {
 		int createGameRoomLogId = saveCreateGameRoomLog(createGameRoomRequestDto,
 			memberInfo.getNickname());
 
-		GameRoom gameRoom = GameRoom.builder().roomNo(roomNumber)
+		GameRoom gameRoom = GameRoom.builder()
+			.roomNo(roomNumber)
+			.channelNo(channelNumber)
 			.title(createGameRoomRequestDto.getRoomName())
 			.password(createGameRoomRequestDto.getPassword())
 			.isPrivate(!createGameRoomRequestDto.getPassword().equals(""))
@@ -607,8 +631,7 @@ public class GameService {
 
 		channel.removeUser(uuid);
 		channel.addUser(uuid, roomNumber);
-		GameValue.addGameChannel(roomNumber,
-			gameRoom);
+		GameValue.addGameChannel(roomNumber,gameRoom);
 		logger.info("Create GameRoom Successful");
 		channel.updateIsUsed(curRoomIndex);
 
@@ -618,11 +641,8 @@ public class GameService {
 		List<GameRoomMemberInfo> gameRoomMemberInfos = new ArrayList<>();
 		gameRoomMemberInfos.add(gameRoomMemberInfo);
 
-		// 메세지 펍 해주기
-		//일반 채팅
 
-		String destination =
-			"/topic/" + roomNumber;
+		String destination = getLobbyDestination(channelNumber);
 
 		GameRoomPubDto gameRoomPubDto = GameRoomPubDto.builder()
 			.memberInfos(gameRoomMemberInfos)
@@ -635,6 +655,7 @@ public class GameService {
 			.roomManagerNickname(memberInfo.getNickname())
 			.build();
 
+		// 방생성메세지 로비에 뿌리기
 		messagingTemplate.convertAndSend(destination, gameRoomPubDto);
 
 		return CreateGameRoomResponseDto.builder()
@@ -676,12 +697,12 @@ public class GameService {
 	/**
 	 * 게임방 입장 발행
 	 *
-	 * @param channelNo
+	 * @param gameRoomNo
 	 */
-	public void enterGameRoomForPublish(String accessToken, int channelNo) {
+	public void enterGameRoomForPublish(String accessToken, int channelNo, int gameRoomNo) {
 		UUID uuid = jwtValidator.getData(accessToken);
-		String destination = getDestination(channelNo);
-		GameRoom gameRoom = GameValue.getGameRooms().get(channelNo);
+		String destination = getDestination(channelNo, gameRoomNo);
+		GameRoom gameRoom = GameValue.getGameRooms().get(gameRoomNo);
 
 		EnterGameRoomDto enterGameRoomDto = commonService.enterGameRoomForPublish(uuid, gameRoom);
 
@@ -696,25 +717,26 @@ public class GameService {
 	 * @return ExitGameRoomResponse
 	 */
 	public ExitGameRoomResponse exitGameRoom(String accessToken, ExitGameRoomRequestDto exitGameRoomRequestDto) {
-		// previousChannelNo : from -> 게임 방 번호
-		int previousChannelNo = exitGameRoomRequestDto.getPreviousChannelNo();
-		// destinationChannelNo : to -> 로비 번호
-		int destinationChannelNo = previousChannelNo / MAKING_LOBBY_CHANNEL_NO;
+
+		int gameRoomNo = exitGameRoomRequestDto.getGameRoomNo();
+
 		UUID uuid = jwtValidator.getData(accessToken);
 
 		String nickname = memberInfoRepository.findNicknameById(uuid)
 			.orElseThrow(() -> new MemberInfoException(MemberInfoErrorCode.NOT_FOUND_MEMBER_INFO));
 
-		//pubDestination == previousChannelNo : pub 해줄 destination
-		String pubDestination = getDestination(previousChannelNo);
-		GameRoom gameRoom = GameValue.getGameRooms().get(previousChannelNo);
+		GameRoom gameRoom = GameValue.getGameRooms().get(gameRoomNo);
+		int lobbyChannelNo = gameRoom.getChannelNo();
 
-		ExitGameRoomDto exitGameRoomDto = commonService.exitGameRoom(uuid, nickname, gameRoom, previousChannelNo);
+		//pubDestination == gameRoomNo : pub 해줄 destination
+		String pubDestination = getDestination(gameRoom.getChannelNo(),gameRoomNo);
+
+		ExitGameRoomDto exitGameRoomDto = commonService.exitGameRoom(uuid, nickname, gameRoom, gameRoomNo);
 
 		messagingTemplate.convertAndSend(pubDestination, exitGameRoomDto);
 
 		ExitGameRoomResponse exitGameRoomResponse = ExitGameRoomResponse.builder()
-			.destinationChannelNo(destinationChannelNo)
+			.destinationChannelNo(lobbyChannelNo)
 			.build();
 
 		return exitGameRoomResponse;
@@ -754,7 +776,7 @@ public class GameService {
 		GameRoom gameRoom = GameValue.getGameRooms().get(gameStartRequestDto.getGameRoomNumber());
 
 		// 게임방 생성 isStart 업데이트
-		updateIsStartOfMultiModeCreateGameRoomLog(gameStartRequestDto);
+		updateIsStartOfCreateGameRoomLog(gameStartRequestDto);
 
 		// 게임 시작 로그 생성
 		int multiModeCreateGameRoomLogId = gameStartLogRepository.save(GameStartLog.builder()
@@ -777,7 +799,7 @@ public class GameService {
 	 * @param gameStartRequestDto
 	 * @see GameStartRequestDto
 	 */
-	private void updateIsStartOfMultiModeCreateGameRoomLog(GameStartRequestDto gameStartRequestDto) {
+	private void updateIsStartOfCreateGameRoomLog(GameStartRequestDto gameStartRequestDto) {
 		// 게임방 생성 로그 게임 시작으로 update
 		CreateGameRoomLog createGameRoomLog = createGameRoomLogRepository.findById(
 			gameStartRequestDto.getCreateGameRoomLogId()).orElseThrow(() ->
@@ -798,18 +820,18 @@ public class GameService {
 	public GameOverResponseDto saveGameOverLog(GameOverRequestDto gameOverRequestDto) {
 
 
-		int multiModeCreateGameRoomLogId = gameOverLogRepository.save(GameOverLog.builder()
-			.multiModeCreateGameRoomLogId(gameOverRequestDto.getCreateGameRoomLogId())
+		int createGameRoomLogId = gameOverLogRepository.save(GameOverLog.builder()
+			.createGameRoomLogId(gameOverRequestDto.getCreateGameRoomLogId())
 			.title(gameOverRequestDto.getTitle())
 			.years(gameOverRequestDto.getYears())
 			.members(gameOverRequestDto.getMembers())
 			.endedAt(gameOverRequestDto.getEndedAt())
 			.playTime(gameOverRequestDto.getPlayTime())
-			.build()).getMultiModeCreateGameRoomLogId();
+			.build()).getCreateGameRoomLogId();
 
 
 		return GameOverResponseDto.builder()
-			.multiModeCreateGameRoomLogId(multiModeCreateGameRoomLogId)
+			.createGameRoomLogId(createGameRoomLogId)
 			.build();
 	}
 
@@ -867,8 +889,9 @@ public class GameService {
 		checkPossibleToModifyGameRoomInformation(accessToken, modifyGameRoomInformationRequestDto);
 
 		GameRoom gameRoom = GameValue.getGameRooms().get(modifyGameRoomInformationRequestDto.getGameRoomNo());
+		int channelNo = gameRoom.getChannelNo();
 
-		// 게임방에서 정보 변경
+		// 게임방 정보 변경
 		gameRoom.modifyInformation(modifyGameRoomInformationRequestDto);
 
 		// log에 변경 내용 저장
@@ -887,7 +910,9 @@ public class GameService {
 		);
 
 		// 퍼블리시
-		String destination = getDestination(modifyGameRoomInformationRequestDto.getGameRoomNo());
+		String lobbyDestination = getLobbyDestination(channelNo);
+		String roomDestination = getDestination(channelNo,modifyGameRoomInformationRequestDto.getGameRoomNo());
+
 		ModifyGameRoomInformationPubDto modifyGameRoomInformationPubDto = ModifyGameRoomInformationPubDto.builder()
 			.messageType(MessageDtoType.MODIFYINFO)
 			.title(modifyGameRoomInformationRequestDto.getTitle())
@@ -896,7 +921,10 @@ public class GameService {
 			.maxUserNumber(modifyGameRoomInformationRequestDto.getMaxUserNumber())
 			.build();
 
-		messagingTemplate.convertAndSend(destination, modifyGameRoomInformationPubDto);
+		// 로비로 변경 메세지
+		messagingTemplate.convertAndSend(lobbyDestination, modifyGameRoomInformationPubDto);
+		// 방으로 변경 메세지
+		messagingTemplate.convertAndSend(roomDestination, modifyGameRoomInformationPubDto);
 
 
 		return new ModifyGameRoomInformationResponseDto();

@@ -35,19 +35,28 @@ public class WebSocketEventListener {
 			SimpMessageHeaderAccessor.class);
 		GenericMessage<?> generic = (GenericMessage<?>) accessor.getHeader("simpConnectMessage");
 		logger.info("generic = {}", generic);
+
 		Map<String, Object> nativeHeaders = (Map<String, Object>) generic.getHeaders().get("nativeHeaders");
 		logger.info("nativeHeader = {}", nativeHeaders);
+
 		Integer channelNo = Integer.parseInt(((List<String>) nativeHeaders.get("channelNo")).get(0));
 		logger.info("channelNo = {}", channelNo);
+
 		String accessToken = ((List<String>) nativeHeaders.get("accessToken")).get(0);
 		logger.info("accessToken = {}", accessToken);
+
+		Integer gameRoomNo = null;
+		if (nativeHeaders.containsKey("gameRoomNo")) {
+			gameRoomNo = Integer.parseInt(((List<String>) nativeHeaders.get("gameRoomNo")).get(0));
+		}
+
 		String connectType = ((List<String>) nativeHeaders.get("connectType")).get(0);
 		logger.info("connectType = {}", connectType);
 
 		if (connectType.equals(ConnectType.ENTER_LOBBY.toString())) {
 			gameService.joinGameChannel(accessToken, channelNo);
 		} else if (connectType.equals(ConnectType.ENTER_GAME_ROOM.toString())) {
-			gameService.enterGameRoomForPublish(accessToken, channelNo);
+			gameService.enterGameRoomForPublish(accessToken, channelNo, gameRoomNo);
 		}
 	}
 

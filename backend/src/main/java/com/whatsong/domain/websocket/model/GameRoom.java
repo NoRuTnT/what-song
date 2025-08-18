@@ -35,51 +35,50 @@ public class GameRoom {
 	private static final int MULTI_MODE_EXP_WEIGHT = 10;
 	private static final String SPACE = " ";
 
+	//todo Room
 	private int roomNo;
+
+	private int channelNo;
+
 	private String title;
 
 	private String password;
 
 	private boolean isPrivate;
 
-	// 방장
 	private UUID roomManagerUUID;
-	//문제 수
-	private int numberOfProblems;
-	//선택한 연도
-	private String year;
 
 	private int maxUserNumber;
 
 	private String roomManagerNickname;
 
+	private Map<UUID, UserInfoItem> userInfoItems;
+
+	private int totalUsers;
 
 	private GameRoomType gameRoomType;
-	//------------------------------------------------
-	private Map<UUID, UserInfoItem> userInfoItems;
-	//currentMembers
-	private int totalUsers;
-	//------------------------------------------------
+
+	private int createGameRoomLogId;
+
+	//todo Game class분리
+	private int numberOfProblems;
+
+	private String year;
+
 	private PlayType playType;
 
 	private int time;
-
 
 	private int skipVote;
 
 	private int round;
 
-	private List<MultiModeProblem> multiModeProblems;
-
-	private int createGameRoomLogId;
+	private List<Problem> problems;
 
 
-	//answerList 추가 (정답리스트)
-	//gameRoomId 추가
-
-	public void setMultiModeProblems(
-		List<MultiModeProblem> multiModeProblems) {
-		this.multiModeProblems = multiModeProblems;
+	public void setProblems(
+		List<Problem> problems) {
+		this.problems = problems;
 	}
 
 	public void setTime(int time) {
