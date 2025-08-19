@@ -31,3 +31,8 @@ spring:
 
 jwt:
   secret-key: ${JWT_SECRETKEY}
+
+server:
+  port: ${WHATSONG_SERVER}
+  servlet:
+    context-path: ${WHATSONG_PATH}
