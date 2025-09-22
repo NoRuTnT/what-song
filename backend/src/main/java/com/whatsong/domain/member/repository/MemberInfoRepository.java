@@ -26,4 +26,6 @@ public interface MemberInfoRepository extends JpaRepository<MemberInfo, UUID> {
 		+ "from MemberInfo i "
 		+ "where i.id = :id")
 	Optional<String> findNicknameById(@Param("id") UUID id);
+
+	Optional<MemberInfo> findByIdAndDeletedFalse(@Param("id") UUID id);
 }
