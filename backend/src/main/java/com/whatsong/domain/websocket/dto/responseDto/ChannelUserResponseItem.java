@@ -14,7 +14,7 @@ import lombok.ToString;
 @ToString
 @Builder
 public class ChannelUserResponseItem {
-	private int userLevel;
+	private long userLevel;
 	private String nickname;
 	private Boolean isGaming;
 }

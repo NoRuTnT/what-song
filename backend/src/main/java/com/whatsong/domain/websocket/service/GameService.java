@@ -539,7 +539,7 @@ public class GameService {
 				() -> new MemberInfoException(MemberInfoErrorCode.NOT_FOUND_MEMBER_INFO));
 			logger.info("Nickname : {}, channel : {}", memberInfo.getNickname(), channel.get(uuid));
 			items.add(ChannelUserResponseItem.builder().nickname(memberInfo.getNickname())
-				.userLevel((int) (memberInfo.getExp() / 50) + 1)
+				.userLevel(memberInfo.getLevel())
 				.isGaming(channel.get(uuid) / 1000 != 0).build());
 		}
 

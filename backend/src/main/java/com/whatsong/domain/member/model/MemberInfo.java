@@ -39,6 +39,14 @@ public class MemberInfo extends BaseTimeEntity {
 	private Double exp;
 
 	@NotNull
+	@Column
+	private Long level;
+
+	@NotNull
+	@Column
+	private Long wins;
+
+	@NotNull
 	@Builder.Default
 	@ColumnDefault("false")
 	@Column
@@ -46,5 +54,13 @@ public class MemberInfo extends BaseTimeEntity {
 
 	public void gainExp(double exp) {
 		this.exp += exp;
+		levelUp();
+	}
+
+	private void levelUp() {
+		while (this.exp >= 50) {
+			this.level += 1;
+			this.exp -= 50;
+		}
 	}
 }
