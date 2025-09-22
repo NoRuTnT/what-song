@@ -32,7 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/member")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -77,9 +77,8 @@ public class AuthController {
 	@Operation(
 		summary = "일반로그인 and guest로그인",
 		description = """
-        ### 이미 회원인 경우 로그인을, 그렇지 않다면 회원가입을 진행합니다.
+        ### 로그인을 진행합니다.        
         
-        - 회원가입을 진행한 유저는 닉네임이 카카오톡 닉네임으로 설정됩니다.
     """,
 		responses = {
 			@ApiResponse(responseCode = "200", description = "로그인 성공"),
@@ -96,7 +95,7 @@ public class AuthController {
 
 	@DisableSwaggerAuthButton
 	@Operation(
-		summary = "로그인 or 회원가입",
+		summary = "소셜로그인 or 회원가입",
 		description = """
         ### 이미 회원인 경우 로그인을, 그렇지 않다면 회원가입을 진행합니다.
         

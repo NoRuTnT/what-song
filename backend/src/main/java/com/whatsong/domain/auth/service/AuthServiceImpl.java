@@ -41,6 +41,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 	private static final Double EXP_INITIAL_NUMBER = 0.0;
+	private static final Long LEVEL_INITIAL_NUMBER = 1L;
+	private static final Long WINS_INITIAL_NUMBER = 0L;
 
 	private final AuthRepository authRepository;
 	private final MemberInfoRepository memberInfoRepository;
@@ -108,6 +110,8 @@ public class AuthServiceImpl implements AuthService {
 			.id(memberUUID)
 			.nickname(signupRequestDto.getNickname())
 			.exp(EXP_INITIAL_NUMBER)
+			.level(LEVEL_INITIAL_NUMBER)
+			.wins(WINS_INITIAL_NUMBER)
 			.build());
 
 		return SignupResponseDto.of(memberInfo.getNickname());
@@ -143,6 +147,8 @@ public class AuthServiceImpl implements AuthService {
 			.id(memberUUID)
 			.nickname(loginId)
 			.exp(EXP_INITIAL_NUMBER)
+			.level(LEVEL_INITIAL_NUMBER)
+			.wins(WINS_INITIAL_NUMBER)
 			.build());
 		return GuestSignupResponseDto.of(memberInfo.getNickname());
 	}
