@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.whatsong.domain.websocket.dto.requestDto.GameOverRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.GameStartRequestDto;
 import com.whatsong.domain.websocket.dto.requestDto.GameResultRequestDto;
+import com.whatsong.global.client.dto.ClickEventRequestDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,4 +41,15 @@ public class GameEventProducer {
 				.payload(resultDto)
 				.build());
 	}
+
+	public void sendClickEvent(ClickEventRequestDto clickDto) {
+		kafkaTemplate.send(
+			"click-event-topic",
+			GameEventMessage.builder()
+				.eventType("CLICK_EVENT")
+				.payload(clickDto)
+				.build()
+		);
+	}
+
 }
