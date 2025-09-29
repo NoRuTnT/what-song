@@ -27,6 +27,8 @@ import com.whatsong.domain.member.model.Member;
 import com.whatsong.domain.member.model.MemberInfo;
 import com.whatsong.domain.member.repository.MemberInfoRepository;
 import com.whatsong.domain.auth.repository.AuthRepository;
+import com.whatsong.global.client.dto.ClickEventRequestDto;
+import com.whatsong.global.kafka.GameEventProducer;
 import com.whatsong.global.redis.RedisService;
 import com.whatsong.global.exception.ErrorCode.AuthErrorCode;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
@@ -51,6 +53,7 @@ public class AuthServiceImpl implements AuthService {
 	private final JwtValidator jwtValidator;
 	private final PasswordEncoder passwordEncoder;
 	private final KakaoMemberProvider kakaoMemberProvider;
+	private final GameEventProducer gameEventProducer;
 
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
@@ -180,6 +183,16 @@ public class AuthServiceImpl implements AuthService {
 		String refreshToken = jwtProvider.createRefreshToken(member.getId());
 
 		redisService.saveRefreshToken(member.getId(), refreshToken);
+
+		ClickEventRequestDto clickDto = ClickEventRequestDto.builder()
+			.userId(member.getId())
+			.element("login")
+			.timestamp(System.currentTimeMillis())
+			.build();
+
+
+		gameEventProducer.sendClickEvent(clickDto);
+
 
 		return LoginResponseDto.builder()
 			.nickname(memberNickname)
