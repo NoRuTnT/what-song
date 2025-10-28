@@ -5,7 +5,8 @@ import org.springframework.http.HttpStatus;
 import lombok.Getter;
 
 @Getter
-public enum MultiModeErrorCode {
+public enum InGameErrorCode {
+	UNKNOWN(HttpStatus.BAD_REQUEST,0, "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
 	INVALID_JOIN_REQUEST(HttpStatus.BAD_REQUEST, 1600, "정원 초과인 채널입니다."),
 	OUT_OF_ROOM_NUMBER(HttpStatus.BAD_REQUEST, 1601, "현재 생성할 수 있는 방이 없습니다."),
 	FULL_ROOM_USER(HttpStatus.BAD_REQUEST, 1602, "정원 초과인 방입니다."),
@@ -21,7 +22,7 @@ public enum MultiModeErrorCode {
 	private final Integer code;
 	private final String message;
 
-	MultiModeErrorCode(HttpStatus status, Integer code, String message) {
+	InGameErrorCode(HttpStatus status, Integer code, String message) {
 		this.status = status;
 		this.code = code;
 		this.message = message;

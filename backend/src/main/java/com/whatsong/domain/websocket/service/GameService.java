@@ -79,9 +79,9 @@ import com.whatsong.domain.websocket.service.subService.BeforeAnswerService;
 import com.whatsong.domain.websocket.service.subService.CommonService;
 import com.whatsong.domain.websocket.service.subService.RoundStartService;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
-import com.whatsong.global.exception.ErrorCode.MultiModeErrorCode;
+import com.whatsong.global.exception.ErrorCode.InGameErrorCode;
 import com.whatsong.global.exception.exception.MemberInfoException;
-import com.whatsong.global.exception.exception.MultiModeException;
+import com.whatsong.global.exception.exception.InGameException;
 import com.whatsong.global.jwt.JwtValidator;
 import com.whatsong.global.kafka.GameEventProducer;
 import com.whatsong.global.redis.RedisService;
@@ -135,7 +135,7 @@ public class GameService {
 
 		// 정원 초과 확인
 		if (GameValue.getGameChannelSize(channelNo) > GameValue.getGameChannelEachMaxSize()) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_JOIN_REQUEST);
+			throw new InGameException(InGameErrorCode.INVALID_JOIN_REQUEST);
 		}
 
 		try {
@@ -791,7 +791,7 @@ public class GameService {
 		// 게임방 생성 로그 게임 시작으로 update
 		CreateGameRoomLog createGameRoomLog = createGameRoomLogRepository.findById(
 			gameStartRequestDto.getCreateGameRoomLogId()).orElseThrow(() ->
-			new MultiModeException(MultiModeErrorCode.NOT_FOUND_MULTI_MODE_CREATE_GAME_ROOM_LOG));
+			new InGameException(InGameErrorCode.NOT_FOUND_MULTI_MODE_CREATE_GAME_ROOM_LOG));
 
 		createGameRoomLog.gameStart();
 		createGameRoomLogRepository.save(createGameRoomLog);
@@ -852,13 +852,13 @@ public class GameService {
 	private LocalDateTime getLatestStartedAt(int createGameRoomLogId) {
 		return gameStartLogRepository.findLatestStartedAtByMultiModeCreateGameRoomLogId(
 				createGameRoomLogId)
-			.orElseThrow(() -> new MultiModeException(MultiModeErrorCode.NOT_FOUND_MULTI_MODE_GAME_START_LOG));
+			.orElseThrow(() -> new InGameException(InGameErrorCode.NOT_FOUND_MULTI_MODE_GAME_START_LOG));
 	}
 
 	private void validateMaxUserNumber(int maxUserNumber) {
 		if (GameRoomUserNumber.MINIMUM_USER_NUMBER.getValue() > maxUserNumber
 			|| GameRoomUserNumber.MAX_USER_NUMBER.getValue() < maxUserNumber) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_MAX_USER_NUMBER);
+			throw new InGameException(InGameErrorCode.INVALID_MAX_USER_NUMBER);
 		}
 	}
 
@@ -929,13 +929,13 @@ public class GameService {
 		UUID uuid = jwtValidator.getData(accessToken);
 
 		if (gameRoom.isNotRoomManager(uuid)) {
-			throw new MultiModeException(MultiModeErrorCode.NOT_ALLOWED_USER);
+			throw new InGameException(InGameErrorCode.NOT_ALLOWED_USER);
 		}
 		if (!gameRoom.getGameRoomType().equals(GameRoomType.WAITING)) {
-			throw new MultiModeException(MultiModeErrorCode.ALREADY_STARTED_ROOM);
+			throw new InGameException(InGameErrorCode.ALREADY_STARTED_ROOM);
 		}
 		if (gameRoom.getTotalUsers() > modifyGameRoomInformationRequestDto.getMaxUserNumber()) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_MAX_USER_NUMBER);
+			throw new InGameException(InGameErrorCode.INVALID_MAX_USER_NUMBER);
 		}
 
 		validateModifyGameRoomInformation(modifyGameRoomInformationRequestDto);
@@ -949,11 +949,11 @@ public class GameService {
 	private void validateModifyGameRoomInformation(ModifyGameRoomInformationRequestDto modifyGameRoomInformationRequestDto) {
 		if (GameRoomInformation.MINIMUM_TITLE_LENGTH.getValue() > modifyGameRoomInformationRequestDto.getTitle().length() ||
 			GameRoomInformation.MAXIMUM_TITLE_LENGTH.getValue() < modifyGameRoomInformationRequestDto.getTitle().length()) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_TITLE_LENGTH);
+			throw new InGameException(InGameErrorCode.INVALID_TITLE_LENGTH);
 		}
 		else if (GameRoomInformation.MINIMUM_MAX_USER_NUMBER.getValue() > modifyGameRoomInformationRequestDto.getMaxUserNumber() ||
 			GameRoomInformation.MAXIMUM_MAX_USER_NUMBER.getValue() < modifyGameRoomInformationRequestDto.getMaxUserNumber()) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_MAX_USER_NUMBER);
+			throw new InGameException(InGameErrorCode.INVALID_MAX_USER_NUMBER);
 		}
 	}
 

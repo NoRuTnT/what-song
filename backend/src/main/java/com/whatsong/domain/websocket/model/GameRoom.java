@@ -17,8 +17,8 @@ import com.whatsong.domain.websocket.dto.gameMessageDto.GameRoomMemberInfo;
 import com.whatsong.domain.websocket.dto.requestDto.ModifyGameRoomInformationRequestDto;
 import com.whatsong.domain.websocket.dto.responseDto.CheckPasswordResponseDto;
 import com.whatsong.domain.websocket.dto.responseDto.EnterGameRoomResponseDto;
-import com.whatsong.global.exception.ErrorCode.MultiModeErrorCode;
-import com.whatsong.global.exception.exception.MultiModeException;
+import com.whatsong.global.exception.ErrorCode.InGameErrorCode;
+import com.whatsong.global.exception.exception.InGameException;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -182,11 +182,11 @@ public class GameRoom {
 
 	public EnterGameRoomResponseDto enterUser(UUID uuid, UserInfoItem userInfoItem) {
 		if (!gameRoomType.equals(GameRoomType.WAITING)) {
-			throw new MultiModeException(MultiModeErrorCode.ALREADY_STARTED_ROOM);
+			throw new InGameException(InGameErrorCode.ALREADY_STARTED_ROOM);
 		}
 
 		if (totalUsers == this.maxUserNumber) {
-			throw new MultiModeException(MultiModeErrorCode.FULL_ROOM_USER);
+			throw new InGameException(InGameErrorCode.FULL_ROOM_USER);
 		}
 
 		userInfoItems.put(uuid, userInfoItem);

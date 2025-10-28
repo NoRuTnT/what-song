@@ -3,8 +3,8 @@ package com.whatsong.domain.websocket.model;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.whatsong.global.exception.ErrorCode.MultiModeErrorCode;
-import com.whatsong.global.exception.exception.MultiModeException;
+import com.whatsong.global.exception.ErrorCode.InGameErrorCode;
+import com.whatsong.global.exception.exception.InGameException;
 
 import lombok.Getter;
 
@@ -29,7 +29,7 @@ public class Channel {
 			}
 		}
 
-		throw new MultiModeException(MultiModeErrorCode.OUT_OF_ROOM_NUMBER);
+		throw new InGameException(InGameErrorCode.OUT_OF_ROOM_NUMBER);
 	}
 
 	public void updateIsUsed(int index) {
