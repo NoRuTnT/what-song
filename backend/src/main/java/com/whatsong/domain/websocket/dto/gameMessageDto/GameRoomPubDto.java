@@ -20,12 +20,11 @@ public class GameRoomPubDto {
 	private String password;
 	private Boolean isPrivate;
 	private Integer numberOfProblems;
-	private String year;
 	private String roomManagerNickname;
 
 	@Builder
 	public GameRoomPubDto(List<GameRoomMemberInfo> memberInfos, Integer roomNo, String roomName,
-		String password, Boolean isPrivate, Integer numberOfProblems, String year,
+		String password, Boolean isPrivate, Integer numberOfProblems,
 		String roomManagerNickname) {
 		this.messageType = MessageDtoType.GOWAITING;
 		this.memberInfos = memberInfos;
@@ -34,7 +33,6 @@ public class GameRoomPubDto {
 		this.password = password;
 		this.isPrivate = isPrivate;
 		this.numberOfProblems = numberOfProblems;
-		this.year = year;
 		this.roomManagerNickname = roomManagerNickname;
 
 	}

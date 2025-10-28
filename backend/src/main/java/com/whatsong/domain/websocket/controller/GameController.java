@@ -4,10 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +31,6 @@ import com.whatsong.domain.websocket.dto.responseDto.GameOverResponseDto;
 import com.whatsong.domain.websocket.dto.responseDto.GameRoomListResponseDto;
 import com.whatsong.domain.websocket.dto.responseDto.GameStartResponseDto;
 import com.whatsong.domain.websocket.dto.responseDto.ModifyGameRoomInformationResponseDto;
-import com.whatsong.domain.websocket.model.ChatMessage;
 import com.whatsong.domain.websocket.service.GameService;
 import com.whatsong.global.common.response.BaseResponse;
 

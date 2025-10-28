@@ -1,25 +1,19 @@
 package com.whatsong.domain.websocket.service.subService;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.whatsong.domain.music.model.Music;
-import com.whatsong.domain.music.model.Title;
 import com.whatsong.domain.music.repository.MusicRepository;
-import com.whatsong.domain.music.repository.TitleRepository;
 import com.whatsong.domain.websocket.data.PlayType;
 import com.whatsong.domain.websocket.dto.gameMessageDto.MusicPlayDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.MusicProblemDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.TimeDto;
 import com.whatsong.domain.websocket.model.GameRoom;
-import com.whatsong.domain.websocket.model.Problem;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,11 +22,10 @@ import lombok.RequiredArgsConstructor;
 public class RoundStartService {
 
 	private final MusicRepository musicRepository;
-	private final TitleRepository titleRepository;
 
 	private static final String SPACE = " ";
 	private static final int LOOP_START_INDEX = 0;
-	private static final int GAME_PLAY_TIME = 60;
+	private static final int GAME_PLAY_TIME = 40;
 
 
 	private final SimpMessageSendingOperations messagingTemplate;
@@ -91,97 +84,80 @@ public class RoundStartService {
 		}
 	}
 
-	public List<Problem> makeProblemList(int numberOfProblems, String year) {
-		StringTokenizer st = new StringTokenizer(year, SPACE);
+	public List<Music> makeProblemList(int musicSetsId) {
 
-		List<Music> musicList = new ArrayList<>();
+		List<Music> musicList = musicRepository.findAllBySetId(musicSetsId);
+		Collections.shuffle(musicList, ThreadLocalRandom.current());
 
-		//선택한 연도에 해당하는 모든 musicList 가져오기
-		while (st.hasMoreTokens()) {
-			List<Music> eachMusicListByYear = musicRepository.findAllByYear(st.nextToken());
-			musicList.addAll(eachMusicListByYear);
-		}
-		//musicList 에서 중복 제거
-		List<Music> finalMusicList = deleteDuplicatedMusic(musicList);
-
-		//numberOfProblems 보다 finalMusicList.size() 가 더 작으면 에러
-		if (finalMusicList.size() < numberOfProblems) {
-			throw new IllegalArgumentException();
-		}
-
-		//finalMusicList 에서 필요한 값만 빼서 multiModeProblemList 만들기
-		List<Problem> problemList = makeProblemFromFinalMusicList(
-			finalMusicList, numberOfProblems);
-
-		return problemList;
+		return musicList;
 	}
 
 
-	/**
-	 * finalMusicList 에서 필요한 값만 빼서 multiModeProblemList 만들기
-	 *
-	 * @param finalMusicList
-	 * @param numberOfProblems
-	 * @return List<Music>
-	 */
-	private List<Problem> makeProblemFromFinalMusicList(
-		List<Music> finalMusicList, int numberOfProblems) {
-		List<Problem> ProblemList = new ArrayList<>();
-
-		// 랜덤한 int를 numberOfProblems만큼 뽑아서 Set에 추가
-		Random random = new Random();
-		Set<Integer> indexes = new HashSet<>();
-
-		while(indexes.size() < numberOfProblems) {
-			int num = random.nextInt(finalMusicList.size());
-			indexes.add(num);
-		}
-
-		for (int index : indexes) {
-			Music music = finalMusicList.get(index);
-			List<Title> titleList = titleRepository.findAllByMusicId(music.getId());
-			List<String> answerList = new ArrayList<>();
-			for (Title title : titleList) {
-				answerList.add(title.getAnswer());
-			}
-			ProblemList.add(
-				Problem.create(music.getTitle(), music.getHint(), music.getSinger(),
-					music.getUrl(), answerList));
-		}
-
-		return ProblemList;
-	}
-
-	/**
-	 * musicList에서 중복 제거
-	 *
-	 * @param musicList
-	 * @return List<Music>
-	 */
-	private List<Music> deleteDuplicatedMusic(List<Music> musicList) {
-		Set<String> titleSet = new HashSet<>();
-		Set<String> singerSet = new HashSet<>();
-		List<Music> finalMusicList = new ArrayList<>();
-
-		for (int i = LOOP_START_INDEX; i < musicList.size(); i++) {
-			Music nowMusic = musicList.get(i);
-
-			int beforeTitleSetSize = titleSet.size();
-			titleSet.add(nowMusic.getTitle());
-			int afterTitleSetSize = titleSet.size();
-
-			int beforeSingerSetSize = singerSet.size();
-			singerSet.add(nowMusic.getSinger());
-			int afterSingerSetSize = singerSet.size();
-
-			if (beforeTitleSetSize == afterTitleSetSize
-				&& beforeSingerSetSize == afterSingerSetSize) {
-				continue;
-			}
-
-			finalMusicList.add(nowMusic);
-		}
-
-		return finalMusicList;
-	}
+	// /**
+	//  * finalMusicList 에서 필요한 값만 빼서 multiModeProblemList 만들기
+	//  *
+	//  * @param finalMusicList
+	//  * @param numberOfProblems
+	//  * @return List<Music>
+	//  */
+	// private List<Problem> makeProblemFromFinalMusicList(
+	// 	List<Music> finalMusicList, int numberOfProblems) {
+	// 	List<Problem> ProblemList = new ArrayList<>();
+	//
+	// 	// 랜덤한 int를 numberOfProblems만큼 뽑아서 Set에 추가
+	// 	Random random = new Random();
+	// 	Set<Integer> indexes = new HashSet<>();
+	//
+	// 	while(indexes.size() < numberOfProblems) {
+	// 		int num = random.nextInt(finalMusicList.size());
+	// 		indexes.add(num);
+	// 	}
+	//
+	// 	for (int index : indexes) {
+	// 		Music music = finalMusicList.get(index);
+	// 		List<Title> titleList = titleRepository.findAllByMusicId(music.getId());
+	// 		List<String> answerList = new ArrayList<>();
+	// 		for (Title title : titleList) {
+	// 			answerList.add(title.getAnswer());
+	// 		}
+	// 		ProblemList.add(
+	// 			Problem.create(music.getTitle(), music.getHint(), music.getSinger(),
+	// 				music.getUrl(), answerList));
+	// 	}
+	//
+	// 	return ProblemList;
+	// }
+	//
+	// /**
+	//  * musicList에서 중복 제거
+	//  *
+	//  * @param musicList
+	//  * @return List<Music>
+	//  */
+	// private List<Music> deleteDuplicatedMusic(List<Music> musicList) {
+	// 	Set<String> titleSet = new HashSet<>();
+	// 	Set<String> singerSet = new HashSet<>();
+	// 	List<Music> finalMusicList = new ArrayList<>();
+	//
+	// 	for (int i = LOOP_START_INDEX; i < musicList.size(); i++) {
+	// 		Music nowMusic = musicList.get(i);
+	//
+	// 		int beforeTitleSetSize = titleSet.size();
+	// 		titleSet.add(nowMusic.getTitle());
+	// 		int afterTitleSetSize = titleSet.size();
+	//
+	// 		int beforeSingerSetSize = singerSet.size();
+	// 		singerSet.add(nowMusic.getSinger());
+	// 		int afterSingerSetSize = singerSet.size();
+	//
+	// 		if (beforeTitleSetSize == afterTitleSetSize
+	// 			&& beforeSingerSetSize == afterSingerSetSize) {
+	// 			continue;
+	// 		}
+	//
+	// 		finalMusicList.add(nowMusic);
+	// 	}
+	//
+	// 	return finalMusicList;
+	// }
 }

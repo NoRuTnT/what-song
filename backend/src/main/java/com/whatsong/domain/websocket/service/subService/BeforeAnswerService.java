@@ -4,20 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import com.whatsong.domain.music.model.Music;
 import com.whatsong.domain.websocket.data.MessageDtoType;
 import com.whatsong.domain.websocket.data.PlayType;
 import com.whatsong.domain.websocket.dto.gameMessageDto.BeforeAnswerCorrectDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.GameRoomMemberInfo;
-import com.whatsong.domain.websocket.dto.gameMessageDto.InitialHintDto;
-import com.whatsong.domain.websocket.dto.gameMessageDto.SingerHintDto;
+import com.whatsong.domain.websocket.dto.gameMessageDto.Hint1Dto;
+import com.whatsong.domain.websocket.dto.gameMessageDto.Hint2Dto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.SkipVoteDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.TimeDto;
 import com.whatsong.domain.websocket.model.GameRoom;
-import com.whatsong.domain.websocket.model.Problem;
 import com.whatsong.domain.websocket.model.UserInfoItem;
 
 import lombok.RequiredArgsConstructor;
@@ -33,8 +33,8 @@ public class BeforeAnswerService {
 	private static final int MAKING_CEIL_NUMBER = 1;
 	private static final int SKIP_VOTE_INITIAL_NUMBER = 0;
 	private static final int ROUND_SYNC_NUMBER = 1;
-	private static final int SINGER_HINT_TIME = 50;
-	private static final int INITIAL_HINT_TIME = 40;
+	private static final int HINT1_TIME = 50;
+	private static final int HINT2_TIME = 40;
 	/**
 	 * beforeAnswer 일때 스킵 로직 구현
 	 *
@@ -54,8 +54,7 @@ public class BeforeAnswerService {
 			+ MAKING_CEIL_NUMBER)) {
 			//정답 pub
 			int round = gameRoom.getRound() - ROUND_SYNC_NUMBER;
-			String title = gameRoom.getProblems().get(round).getTitle();
-			String singer = gameRoom.getProblems().get(round).getSinger();
+			String answer = gameRoom.getProblems().get(round).getAnswer();
 
 			List<GameRoomMemberInfo> memberInfos = new ArrayList<>();
 
@@ -80,7 +79,7 @@ public class BeforeAnswerService {
 
 			}
 			BeforeAnswerCorrectDto beforeAnswerCorrectDto = BeforeAnswerCorrectDto.create(
-				MessageDtoType.BEFOREANSWERCORRECT,"", title, singer, SKIP_VOTE_INITIAL_NUMBER, memberInfos);
+				MessageDtoType.BEFOREANSWERCORRECT,"", answer, SKIP_VOTE_INITIAL_NUMBER, memberInfos);
 			messagingTemplate.convertAndSend(destination, beforeAnswerCorrectDto);
 
 		} else {
@@ -97,17 +96,17 @@ public class BeforeAnswerService {
 	public void doBeforeAnswer(Integer roomNum, GameRoom room) {
 
 		// 현재 문제를 뽑아오기
-		Problem currentProblem = room.getProblems().get(room.getRound() - 1);
+		Music currentProblem = room.getProblems().get(room.getRound() - 1);
 
-		// 10초가 지났다면 가수 힌트
-		if (room.getTime() == SINGER_HINT_TIME) {
-			SingerHintDto dto = SingerHintDto.builder().singerHint(currentProblem.getSinger())
+		// 10초가 지났다면 힌트1
+		if (room.getTime() == HINT1_TIME) {
+			Hint1Dto dto = Hint1Dto.builder().hint1(currentProblem.getHint1())
 				.build();
 			messagingTemplate.convertAndSend("/topic/" + roomNum, dto);
 		}
-		// 20초 지났다면 초성 힌트
-		else if (room.getTime() == INITIAL_HINT_TIME) {
-			InitialHintDto dto = InitialHintDto.builder().initialHint(currentProblem.getInitialHint())
+		// 20초 지났다면 초성 힌트2
+		else if (room.getTime() == HINT2_TIME) {
+			Hint2Dto dto = Hint2Dto.builder().hint2(currentProblem.getHint2())
 				.build();
 			messagingTemplate.convertAndSend("/topic/" + roomNum, dto);
 		}
@@ -142,8 +141,7 @@ public class BeforeAnswerService {
 			}
 
 			BeforeAnswerCorrectDto dto = BeforeAnswerCorrectDto.create(
-				MessageDtoType.BEFOREANSWERCORRECT, "", currentProblem.getTitle(),
-				currentProblem.getSinger(), 0, memberInfos);
+				MessageDtoType.BEFOREANSWERCORRECT, "", currentProblem.getAnswer(),0, memberInfos);
 			messagingTemplate.convertAndSend("/topic/" + roomNum, dto);
 
 

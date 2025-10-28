@@ -17,8 +17,8 @@ public class GameOverRequestDto {
 	private int createGameRoomLogId;
 	@Schema(description = "방이름")
 	private String title;
-	@Schema(description = "연도")
-	private String years;
+	@Schema(description = "사용한 musicset")
+	private int musicSetId;
 	@Schema(description = "참여한 전체유저의 닉네임과 점수")
 	private List<GameResultItem> members;
 	@Schema(description = "종료시각")

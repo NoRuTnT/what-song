@@ -32,7 +32,7 @@ public class ModifyGameRoomInformationLog {
 
 	@NotNull
 	@Column
-	private String previousYear;
+	private int previousMusicSetId;
 
 	@NotNull
 	@Column
@@ -48,7 +48,7 @@ public class ModifyGameRoomInformationLog {
 
 	@NotNull
 	@Column
-	private String modifiedYear;
+	private int modifiedMusicSetId;
 
 	@NotNull
 	@Column

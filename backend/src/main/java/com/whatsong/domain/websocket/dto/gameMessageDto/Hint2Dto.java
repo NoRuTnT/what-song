@@ -8,14 +8,14 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class InitialHintDto {
+public class Hint2Dto {
 
 	private MessageDtoType messageType;
-	private String initialHint;
+	private String hint2;
 
 	@Builder
-	public InitialHintDto(String initialHint) {
-		this.messageType = MessageDtoType.INITIALHINT;
-		this.initialHint = initialHint;
+	public Hint2Dto(String hint2) {
+		this.messageType = MessageDtoType.HINT2;
+		this.hint2 = hint2;
 	}
 }

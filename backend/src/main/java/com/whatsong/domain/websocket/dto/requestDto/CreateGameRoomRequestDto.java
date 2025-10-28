@@ -17,7 +17,7 @@ public class CreateGameRoomRequestDto {
 	private int channelNo;
 	private String roomName;
 	private String password;
-	private String musicYear;
 	private int maxUserNumber;
+	private int musicSetId;
 	private int quizAmount;
 }

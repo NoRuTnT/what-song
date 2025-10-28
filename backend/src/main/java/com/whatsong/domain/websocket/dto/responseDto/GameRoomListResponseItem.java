@@ -16,5 +16,4 @@ public class GameRoomListResponseItem {
 	private int quizAmount;
 	private Boolean isPrivate;
 	private Boolean isPlay;
-	private List<String> years;
 }

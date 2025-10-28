@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.whatsong.domain.music.model.Music;
 import com.whatsong.domain.websocket.data.GameRoomType;
 import com.whatsong.domain.websocket.data.GameValue;
 import com.whatsong.domain.websocket.data.MessageDtoType;
-import com.whatsong.domain.websocket.data.MessageType;
 import com.whatsong.domain.websocket.data.PlayType;
 import com.whatsong.domain.websocket.dto.GetUserInfoItemDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.EnterGameRoomDto;
@@ -60,11 +60,13 @@ public class GameRoom {
 
 	private int createGameRoomLogId;
 
-	//todo Game class분리
-	private int numberOfProblems;
+	private int quizAmount;
 
-	private String year;
+	private int musicSetId;
 
+	private List<Music> problems;
+
+	// gameState
 	private PlayType playType;
 
 	private int time;
@@ -73,11 +75,11 @@ public class GameRoom {
 
 	private int round;
 
-	private List<Problem> problems;
+
 
 
 	public void setProblems(
-		List<Problem> problems) {
+		List<Music> problems) {
 		this.problems = problems;
 	}
 
@@ -266,8 +268,7 @@ public class GameRoom {
 
 	public void modifyInformation(ModifyGameRoomInformationRequestDto modifyGameRoomInformationRequestDto) {
 		this.title = modifyGameRoomInformationRequestDto.getTitle();
-		this.year = modifyGameRoomInformationRequestDto.getYear();
-		this.numberOfProblems = modifyGameRoomInformationRequestDto.getQuizAmount();
+		this.musicSetId = modifyGameRoomInformationRequestDto.getMusicSetId();
 		this.maxUserNumber = modifyGameRoomInformationRequestDto.getMaxUserNumber();
 	}
 }

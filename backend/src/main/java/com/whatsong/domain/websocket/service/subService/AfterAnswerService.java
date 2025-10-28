@@ -3,7 +3,6 @@ package com.whatsong.domain.websocket.service.subService;
 import java.util.Map;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +14,8 @@ import com.whatsong.domain.websocket.dto.gameMessageDto.SkipVoteDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.TimeDto;
 import com.whatsong.domain.websocket.model.GameRoom;
 import com.whatsong.domain.websocket.model.UserInfoItem;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +44,7 @@ public class AfterAnswerService {
 		}
 		// 0초인 경우
 		else {
-			if (room.getRound() >= room.getNumberOfProblems()) {
+			if (room.getRound() >= room.getQuizAmount()) {
 				room.changeGameRoomType(GameRoomType.ENDING);
 				room.setTime(10);
 			} else {

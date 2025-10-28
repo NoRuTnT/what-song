@@ -40,7 +40,7 @@ public class GameOverLog {
 
 	@NotNull
 	@Column
-	private String years;
+	private int musicsetId;
 
 	@ElementCollection
 	@CollectionTable(name = "game_result_member", joinColumns = @JoinColumn(name = "game_result_id"))

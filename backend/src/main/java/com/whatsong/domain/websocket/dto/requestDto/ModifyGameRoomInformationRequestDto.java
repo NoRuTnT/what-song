@@ -10,7 +10,7 @@ public class ModifyGameRoomInformationRequestDto {
 
 	private String title;
 
-	private String year;
+	private int musicSetId;
 
 	private int quizAmount;
 

@@ -1,11 +1,8 @@
 package com.whatsong.domain.websocket.service;
 
-import jakarta.annotation.PostConstruct;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -16,8 +13,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
-
-import lombok.RequiredArgsConstructor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +30,7 @@ import com.whatsong.domain.websocket.data.GameValue;
 import com.whatsong.domain.websocket.data.MessageDtoType;
 import com.whatsong.domain.websocket.data.MessageType;
 import com.whatsong.domain.websocket.data.PlayType;
+import com.whatsong.domain.websocket.dto.GameResultMemberDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.BeforeAnswerCorrectDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.ChatMessagePubDto;
 import com.whatsong.domain.websocket.dto.gameMessageDto.EnterGameRoomDto;
@@ -72,25 +68,27 @@ import com.whatsong.domain.websocket.model.GameRoom;
 import com.whatsong.domain.websocket.model.UserInfoItem;
 import com.whatsong.domain.websocket.model.log.CreateGameRoomLog;
 import com.whatsong.domain.websocket.model.log.GameOverLog;
-import com.whatsong.domain.websocket.dto.GameResultMemberDto;
 import com.whatsong.domain.websocket.model.log.GameStartLog;
 import com.whatsong.domain.websocket.model.log.ModifyGameRoomInformationLog;
 import com.whatsong.domain.websocket.repository.CreateGameRoomLogRepository;
+import com.whatsong.domain.websocket.repository.GameOverLogRepository;
 import com.whatsong.domain.websocket.repository.GameStartLogRepository;
 import com.whatsong.domain.websocket.repository.ModifyGameRoomInformationLogRepository;
-import com.whatsong.domain.websocket.repository.GameOverLogRepository;
 import com.whatsong.domain.websocket.service.subService.AfterAnswerService;
 import com.whatsong.domain.websocket.service.subService.BeforeAnswerService;
 import com.whatsong.domain.websocket.service.subService.CommonService;
 import com.whatsong.domain.websocket.service.subService.RoundStartService;
-import com.whatsong.global.kafka.GameEventProducer;
-import com.whatsong.global.redis.RedisService;
-import com.whatsong.global.redis.RedisService.RedisKey;
 import com.whatsong.global.exception.ErrorCode.MemberInfoErrorCode;
 import com.whatsong.global.exception.ErrorCode.MultiModeErrorCode;
 import com.whatsong.global.exception.exception.MemberInfoException;
 import com.whatsong.global.exception.exception.MultiModeException;
 import com.whatsong.global.jwt.JwtValidator;
+import com.whatsong.global.kafka.GameEventProducer;
+import com.whatsong.global.redis.RedisService;
+import com.whatsong.global.redis.RedisService.RedisKey;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -235,8 +233,7 @@ public class GameService {
 
 			// 문제 출제
 			gameRoom.setProblems(
-				roundStartService.makeProblemList(gameRoom.getNumberOfProblems(),
-					gameRoom.getYear()));
+				roundStartService.makeProblemList(gameRoom.getMusicSetId()));
 
 			List<GameRoomMemberInfo> memberInfos = gameRoom.getUserInfoItems().values().stream()
 				.map(item -> GameRoomMemberInfo.builder()
@@ -306,17 +303,14 @@ public class GameService {
 					int round = gameRoom.getRound() - 1;
 					String submitedAnswer = chatMessage.getMessage().replaceAll(" ", "")
 						.toLowerCase();
-					for (String answer : gameRoom.getProblems().get(round)
-						.getAnswerList()) {
+					for (String answer : gameRoom.getProblems().get(round).getAnswers()) {
 						//정답 맞은 경우
 						answer = answer.replaceAll(" ", "").toLowerCase();
 						if (submitedAnswer.equals(answer.toLowerCase())) {
 
 							gameRoom.setPlayType(PlayType.AFTERANSWER);
 
-							String title = gameRoom.getProblems().get(round).getTitle();
-							String singer = gameRoom.getProblems().get(round).getSinger();
-
+							String showAnswer = gameRoom.getProblems().get(round).getAnswer();
 							List<GameRoomMemberInfo> memberInfos = new ArrayList<>();
 							//스킵 투표 초기화
 							gameRoom.setSkipVote(0);
@@ -337,7 +331,7 @@ public class GameService {
 							// 정답자 닉네임, 정답 제목, 가수, skipVote 0 pub, 유저의 모든 닉네임, 스코어 pub
 							BeforeAnswerCorrectDto beforeAnswerCorrectDto = BeforeAnswerCorrectDto.create(
 								MessageDtoType.BEFOREANSWERCORRECT, chatMessage.getNickname(),
-								title, singer, 0, memberInfos);
+								showAnswer, 0, memberInfos);
 							messagingTemplate.convertAndSend(destination, beforeAnswerCorrectDto);
 
 							return;
@@ -426,7 +420,7 @@ public class GameService {
 					GameOverRequestDto gameOverRequestDto = GameOverRequestDto.builder()
 						.createGameRoomLogId(room.getCreateGameRoomLogId())
 						.title(room.getTitle())
-						.years(room.getYear())
+						.musicSetId(room.getMusicSetId())
 						.members(gameResults)
 						.endedAt(endedAt)
 						.playTime(playTime)
@@ -493,8 +487,7 @@ public class GameService {
 						.roomName(room.getTitle())
 						.password(room.getPassword())
 						.isPrivate(room.isPrivate())
-						.numberOfProblems(room.getNumberOfProblems())
-						.year(room.getYear())
+						.numberOfProblems(room.getProblems().size())
 						.roomManagerNickname(room.getRoomManagerNickname())
 						.build();
 
@@ -568,7 +561,6 @@ public class GameService {
 				MemberInfo roomManager = memberInfoRepository.findById(
 					gameRoom.getRoomManagerUUID()).orElseThrow(() -> new MemberInfoException(
 					MemberInfoErrorCode.NOT_FOUND_MEMBER_INFO));
-				List<String> years = Arrays.stream(gameRoom.getYear().split(" ")).toList();
 				gameRoomListResponseItems.add(
 					GameRoomListResponseItem.builder()
 						.gameRoomNo(subscribeNo)
@@ -577,10 +569,9 @@ public class GameService {
 						.maxUserNumber(gameRoom.getMaxUserNumber())
 						.currentMembers(gameRoom.getTotalUsers())
 						.currentRound(gameRoom.getRound())
-						.quizAmount(gameRoom.getNumberOfProblems())
+						.quizAmount(gameRoom.getQuizAmount())
 						.isPrivate(!gameRoom.getPassword().equals(""))
 						.isPlay(gameRoom.getGameRoomType().equals(GameRoomType.PLAYING))
-						.years(years)
 						.build());
 			}
 		}
@@ -621,8 +612,8 @@ public class GameService {
 			.isPrivate(!createGameRoomRequestDto.getPassword().equals(""))
 			.roomManagerUUID(uuid)
 			.roomManagerNickname(memberInfo.getNickname())
-			.numberOfProblems(createGameRoomRequestDto.getQuizAmount())
-			.year(createGameRoomRequestDto.getMusicYear())
+			.quizAmount(createGameRoomRequestDto.getQuizAmount())
+			.musicSetId(createGameRoomRequestDto.getMusicSetId())
 			.maxUserNumber(createGameRoomRequestDto.getMaxUserNumber())
 			.totalUsers(0)
 			.gameRoomType(GameRoomType.WAITING)
@@ -651,7 +642,6 @@ public class GameService {
 			.password(createGameRoomRequestDto.getPassword())
 			.isPrivate(!gameRoom.getPassword().equals(""))
 			.numberOfProblems(createGameRoomRequestDto.getQuizAmount())
-			.year(createGameRoomRequestDto.getMusicYear())
 			.roomManagerNickname(memberInfo.getNickname())
 			.build();
 
@@ -753,7 +743,6 @@ public class GameService {
 	private int saveCreateGameRoomLog(CreateGameRoomRequestDto createGameRoomRequestDto, String nickname) {
 		return createGameRoomLogRepository.save(CreateGameRoomLog.builder()
 				.title(createGameRoomRequestDto.getRoomName())
-				.years(createGameRoomRequestDto.getMusicYear())
 				.maxUserNumber(createGameRoomRequestDto.getMaxUserNumber())
 				.quizAmount(createGameRoomRequestDto.getQuizAmount())
 				.roomManagerNickname(nickname)
@@ -782,7 +771,6 @@ public class GameService {
 		int multiModeCreateGameRoomLogId = gameStartLogRepository.save(GameStartLog.builder()
 			.multiModeCreateGameRoomLogId(gameStartRequestDto.getCreateGameRoomLogId())
 			.title(gameRoom.getTitle())
-			.years(gameRoom.getYear())
 			.roomManagerNickname(gameRoom.getRoomManagerNickname())
 			.nicknames(gameRoom.getNicknames())
 			.startedAt(LocalDateTime.now())
@@ -823,7 +811,7 @@ public class GameService {
 		int createGameRoomLogId = gameOverLogRepository.save(GameOverLog.builder()
 			.createGameRoomLogId(gameOverRequestDto.getCreateGameRoomLogId())
 			.title(gameOverRequestDto.getTitle())
-			.years(gameOverRequestDto.getYears())
+			.musicsetId(gameOverRequestDto.getMusicSetId())
 			.members(gameOverRequestDto.getMembers())
 			.endedAt(gameOverRequestDto.getEndedAt())
 			.playTime(gameOverRequestDto.getPlayTime())
@@ -899,12 +887,10 @@ public class GameService {
 			ModifyGameRoomInformationLog.builder()
 				.createGameRoomLogId(modifyGameRoomInformationRequestDto.getCreateGameRoomLogId())
 				.previousTitle(gameRoom.getTitle())
-				.previousYear(gameRoom.getYear())
-				.previousQuizAmount(gameRoom.getNumberOfProblems())
+				.previousMusicSetId(gameRoom.getMusicSetId())
 				.previousMaxUserNumber(gameRoom.getMaxUserNumber())
 				.modifiedTitle(modifyGameRoomInformationRequestDto.getTitle())
-				.modifiedYear(modifyGameRoomInformationRequestDto.getYear())
-				.modifiedQuizAMount(modifyGameRoomInformationRequestDto.getQuizAmount())
+				.modifiedMusicSetId(modifyGameRoomInformationRequestDto.getMusicSetId())
 				.modifiedMaxUserNumber(modifyGameRoomInformationRequestDto.getMaxUserNumber())
 				.build()
 		);
@@ -916,7 +902,6 @@ public class GameService {
 		ModifyGameRoomInformationPubDto modifyGameRoomInformationPubDto = ModifyGameRoomInformationPubDto.builder()
 			.messageType(MessageDtoType.MODIFYINFO)
 			.title(modifyGameRoomInformationRequestDto.getTitle())
-			.year(modifyGameRoomInformationRequestDto.getYear())
 			.quizAmount(modifyGameRoomInformationRequestDto.getQuizAmount())
 			.maxUserNumber(modifyGameRoomInformationRequestDto.getMaxUserNumber())
 			.build();
@@ -965,15 +950,6 @@ public class GameService {
 		if (GameRoomInformation.MINIMUM_TITLE_LENGTH.getValue() > modifyGameRoomInformationRequestDto.getTitle().length() ||
 			GameRoomInformation.MAXIMUM_TITLE_LENGTH.getValue() < modifyGameRoomInformationRequestDto.getTitle().length()) {
 			throw new MultiModeException(MultiModeErrorCode.INVALID_TITLE_LENGTH);
-		}
-		else if (modifyGameRoomInformationRequestDto.getYear().equals("")) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_YEAR);
-		}
-		else if (modifyGameRoomInformationRequestDto.getQuizAmount() != GameRoomInformation.QUIZ_AMOUNT_3.getValue() &&
-			modifyGameRoomInformationRequestDto.getQuizAmount() != GameRoomInformation.QUIZ_AMOUNT_10.getValue() &&
-			modifyGameRoomInformationRequestDto.getQuizAmount() != GameRoomInformation.QUIZ_AMOUNT_20.getValue() &&
-			modifyGameRoomInformationRequestDto.getQuizAmount() != GameRoomInformation.QUIZ_AMOUNT_30.getValue()) {
-			throw new MultiModeException(MultiModeErrorCode.INVALID_QUIZ_AMOUNT);
 		}
 		else if (GameRoomInformation.MINIMUM_MAX_USER_NUMBER.getValue() > modifyGameRoomInformationRequestDto.getMaxUserNumber() ||
 			GameRoomInformation.MAXIMUM_MAX_USER_NUMBER.getValue() < modifyGameRoomInformationRequestDto.getMaxUserNumber()) {
