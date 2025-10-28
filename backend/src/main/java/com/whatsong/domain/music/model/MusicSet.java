@@ -24,12 +24,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "music_sets",
+@Table(name = "music_set",
 	indexes = {
 		@Index(name = "idx_music_sets_owner", columnList = "owner_id"),
 		@Index(name = "idx_music_sets_is_public", columnList = "is_public")
 	})
-public class MusicSets {
+public class MusicSet {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;

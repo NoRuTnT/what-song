@@ -33,7 +33,7 @@ public class Music {
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "set_id", nullable = false)
-	private MusicSets setId;
+	private MusicSet setId;
 
 	@Size(max = 255)
 	@NotNull
