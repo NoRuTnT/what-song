@@ -1,7 +1,6 @@
-package com.whatsong.domain.member.Service;
+package com.whatsong.domain.member.service;
 
 import com.whatsong.domain.member.dto.responseDto.MemberInfoResponseDto;
-import com.whatsong.domain.member.model.MemberInfo;
 
 public interface MemberInfoService {
 
