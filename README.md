@@ -1,2 +1,37 @@
-# Whatsong Backend repo
-client repo : https://github.com/NoRuTnT/what-songkmp
+# 🎵 Whatsong – 실시간 음악 맞히기 게임
+
+Whatsong은 친구들과 함께 노래를 듣고 제목을 맞히는 **실시간 음악 퀴즈 게임**입니다.  
+Kotlin Multiplatform 클라이언트와 Spring Boot 백엔드로 구성되어 있습니다.
+> 이 저장소는 **Backend** 코드입니다.  
+> KMP 기반 클라이언트 저장소: https://github.com/NoRuTnT/what-songkmp
+
+
+## ✨ 주요 기능
+
+- **실시간 음악 퀴즈**
+  - 방 생성 / 참가 / 퇴장
+  - 라운드별로 음악 재생 후 제목/가수 맞히기
+  - 정답속도에 따른 점수 차등부여 or 최초정답자만 점수부여 선택 
+
+- **힌트 시스템**
+  - 시간이 경과함에따라 초성 힌트, 주제 힌트 등 단계별 힌트 제공
+
+- **랭킹**
+  - 유저별 레벨 기반 랭킹
+
+
+## 🛠 기술 스택
+
+- **Backend**
+  - Java / Spring Boot
+  - WebSocket / STOMP
+  - Redis – 랭킹 캐시
+  - Kafka – 게임 내 행동이벤트 발행
+  - ClickhouseDB - 로그 적재 및 분석
+
+## 🚀 앞으로의 계획
+
+- 마이페이지에서 지난게임기록 조회추가
+- 업적시스템 추가
+- 만들어진 문제리스트를 사용하는것이아닌 유저가 문제리스트를 직접만들고 플레이할수있는 플랫폼으로 변화.
+- 노래를 포함한 다양한 컨텐츠를 이용해 문제를 만들수있게 변화.
