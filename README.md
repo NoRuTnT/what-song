@@ -20,14 +20,19 @@ Kotlin Multiplatform 클라이언트와 Spring Boot 백엔드로 구성되어 �
   - 유저별 레벨 기반 랭킹
 
 
-## 🛠 기술 스택
-
+## 🏗 아키텍처 개요
 - **Backend**
-  - Java / Spring Boot
-  - WebSocket / STOMP
-  - Redis – 랭킹 캐시
-  - Kafka – 게임 내 행동이벤트 발행
-  - ClickhouseDB - 로그 적재 및 분석
+  - REST API + WebSocket 기반 실시간 게임 서버
+  - 게임룸, 라운드, 유저 세션, 점수 계산 등 핵심 도메인 로직 처리
+
+- **Client (Kotlin Multiplatform)**
+  - Android / Web 클라이언트 공통 코드
+  - 음악 재생, 문제/힌트 UI, 실시간 점수판 및 랭킹 화면 제공
+
+- **데이터 파이프라인**
+  - 게임 이벤트/행동 로그를 메시지 큐에 적재
+  - ClickHouse에 저장 후 리텐션/지표 분석에 활용
+  - 서비스 개선을 위한 지표 도출
 
 ## 🚀 앞으로의 계획
 
