@@ -21,9 +21,14 @@ Kotlin Multiplatform 클라이언트와 Spring Boot 백엔드로 구성되어 �
 
 
 ## 🏗 아키텍처 개요
+
+<img width="3317" height="1410" alt="Untitled diagram-2025-11-28-121611" src="https://github.com/user-attachments/assets/3ff87217-1d8b-4191-9495-dd05587a8efe" />
+
+
+
 - **Backend**
   - REST API + WebSocket 기반 실시간 게임 서버
-  - 게임룸, 라운드, 유저 세션, 점수 계산 등 핵심 도메인 로직 처리
+  - 게임룸, 라운드, 점수계산 등 핵심 로직 처리
 
 - **Client (Kotlin Multiplatform)**
   - Android / Web 클라이언트 공통 코드
